@@ -1,0 +1,198 @@
+/* -------------------- GENERAL SETUP -------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    --primary-color: #ffffff;
+    --accent-color: #00d4ff;
+    --sidebar-width: 250px;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    color: #fff;
+    background: linear-gradient(45deg, #0f2027, #203a43, #2c5364); /* Deep modern gradient */
+    background-attachment: fixed; /* Background stays still */
+    min-height: 100vh;
+    display: flex; /* Muhimu kwa Sidebar layout */
+    overflow-x: hidden;
+}
+
+/* -------------------- SIDEBAR (Kushoto) -------------------- */
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background: rgba(0, 0, 0, 0.3); /* Darker glass for sidebar */
+    backdrop-filter: blur(15px);
+    border-right: 1px solid var(--glass-border);
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+.brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-bottom: 40px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+}
+
+.nav-links li {
+    margin-bottom: 15px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: rgba(255,255,255,0.8);
+    font-size: 1.1rem;
+    display: block;
+    padding: 12px 15px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.nav-links a:hover, .nav-links a.active {
+    background: var(--glass-bg);
+    color: var(--accent-color);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transform: translateX(5px);
+}
+
+.sidebar-footer {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    border-top: 1px solid var(--glass-border);
+    padding-top: 20px;
+}
+
+/* -------------------- MAIN CONTENT (Kulia) -------------------- */
+.main-content {
+    margin-left: var(--sidebar-width); /* Space for sidebar */
+    flex: 1;
+    padding: 40px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* -------------------- ADVANCED GLASSMORPHISM CARDS -------------------- */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    box-shadow: var(--glass-shadow);
+    padding: 30px;
+    margin-bottom: 30px;
+    transition: transform 0.3s ease;
+}
+
+.glass-panel:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-color);
+}
+
+/* -------------------- FOUNDER SECTION -------------------- */
+.founder-section {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.founder-img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--accent-color);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+}
+
+.founder-info h2 {
+    color: var(--accent-color);
+    margin-top: 0;
+}
+
+/* -------------------- BUTTONS & FORMS -------------------- */
+.btn {
+    background: linear-gradient(135deg, var(--accent-color), #0083b0);
+    color: white;
+    padding: 10px 25px;
+    border: none;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.btn:hover {
+    box-shadow: 0 0 15px var(--accent-color);
+    transform: scale(1.05);
+}
+
+/* -------------------- FOOTER (Vision/Mission) -------------------- */
+.site-footer {
+    margin-top: auto; /* Push to bottom */
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.vision-mission {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.vm-card {
+    flex: 1;
+    min-width: 250px;
+    background: rgba(0,0,0,0.2);
+    padding: 15px;
+    border-radius: 15px;
+}
+
+.vm-card h4 { color: var(--accent-color); margin-bottom: 5px; }
+
+/* -------------------- MOBILE RESPONSIVE -------------------- */
+@media (max-width: 768px) {
+    body { flex-direction: column; }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding: 10px;
+    }
+    .brand { margin-bottom: 10px; font-size: 1.2rem; }
+    .nav-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .nav-links li { margin: 0; }
+    .nav-links a { font-size: 0.9rem; padding: 8px 12px; }
+    .main-content { margin-left: 0; padding: 15px; }
+    .founder-section { flex-direction: column; text-align: center; }
