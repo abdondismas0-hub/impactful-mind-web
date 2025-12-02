@@ -1,0 +1,40 @@
+{% extends "public/base.html" %}
+
+{% block content %}
+<div class="glass-panel" style="max-width: 800px; margin: 50px auto;">
+    <h2 style="text-align: center; color: var(--accent-color);">✍️ Hariri Taarifa za Mwanzilishi</h2>
+    <p style="text-align: center; margin-bottom: 30px; color: #aaa;">Hii itabadilisha sehemu ya 'Meet The Founder' kwenye Ukurasa wa Nyumbani.</p>
+    
+    <form method="POST" enctype="multipart/form-data">
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 10px;">Jina la Mwanzilishi:</label>
+            <input type="text" name="founder_name" value="{{ about_info.founder_name if about_info else '' }}" required style="width: 100%; padding: 12px; border-radius: 10px; border: none;">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 10px;">Maelezo ya Mwanzilishi (Bio):</label>
+            <textarea name="founder_bio" rows="8" required style="width: 100%; padding: 12px; border-radius: 10px; border: none;">{{ about_info.founder_bio if about_info else '' }}</textarea>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 10px;">Picha ya Sasa ya Mwanzilishi:</label>
+            {% if about_info and about_info.founder_image %}
+                <img src="{{ url_for('download_book', filename=about_info.founder_image) }}" alt="Picha ya Sasa" style="max-width: 200px; height: auto; border-radius: 10px; margin-bottom: 10px; border: 3px solid var(--accent-color);">
+            {% else %}
+                <p style="color: #aaa;">Hakuna picha iliyopakia.</p>
+            {% endif %}
+            <label style="display: block; margin-bottom: 10px; margin-top: 15px;">Badilisha Picha (Chagua Mpya):</label>
+            <input type="file" name="founder_image" accept="image/*" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+            <p style="font-size: 0.8rem; color: #f1c40f; margin-top: 5px;">Kupakia picha mpya itafuta ile ya zamani.</p>
+        </div>
+
+        <button type="submit" class="btn" style="width: 100%; background-color: #e74c3c;">Hifadhi Mabadiliko</button>
+    </form>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="{{ url_for('admin_dashboard') }}" style="color: #fff;">Rudi Dashboard</a>
+    </div>
+</div>
+{% endblock %}
+

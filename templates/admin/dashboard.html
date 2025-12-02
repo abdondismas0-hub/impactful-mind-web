@@ -1,0 +1,46 @@
+{% extends "public/base.html" %}
+
+{% block content %}
+<div style="padding-top: 50px;">
+    <h1 style="text-align: center; margin-bottom: 40px;">Admin Dashboard</h1>
+    
+    <div class="stats-grid">
+        <div class="glass-panel stat-card">
+            <h2>{{ total_posts }}</h2>
+            <p>Total Posts</p>
+        </div>
+        <div class="glass-panel stat-card">
+            <h2>{{ total_books }}</h2>
+            <p>Total Books</p>
+        </div>
+    </div>
+    
+    <div class="admin-actions">
+        <!-- POSTS ACTIONS -->
+        <div class="glass-panel action-card">
+            <h3>Daily Posts</h3>
+            <a href="{{ url_for('add_post') }}" class="btn" style="background-color: #f1c40f; color: #0c1422; width: 100%;">+ Add New Post</a>
+            <!-- Note: Tulitarajia kuwa na edit/delete, lakini kwa sasa tunachapa pekee -->
+        </div>
+
+        <!-- LIBRARY ACTIONS -->
+        <div class="glass-panel action-card">
+            <h3>Library / Maktaba</h3>
+            <a href="{{ url_for('add_book') }}" class="btn" style="background-color: #3498db; width: 100%;">+ Add New Book/PDF</a>
+            <!-- Note: Tulitarajia kuwa na edit/delete, lakini kwa sasa tunapakia pekee -->
+        </div>
+        
+        <!-- NEW: ABOUT US ACTION -->
+        <div class="glass-panel action-card" style="border: 2px solid #e74c3c;">
+            <h3>Taarifa za Mwanzilishi</h3>
+            <a href="{{ url_for('edit_about') }}" class="btn" style="background-color: #e74c3c; width: 100%;">✏️ Hariri Picha/Maelezo</a>
+        </div>
+        <!------------------------->
+    </div>
+
+    <div style="text-align: center; margin-top: 50px;">
+        <a href="{{ url_for('admin_logout') }}" class="btn" style="background-color: #2c3e50; padding: 10px 30px;">Logout</a>
+    </div>
+</div>
+{% endblock %}
+
