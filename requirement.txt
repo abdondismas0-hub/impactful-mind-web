@@ -1,5 +1,5 @@
-Flask
-Flask-SQLAlchemy
-Flask-Login
-passlib
-gunicorn
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.3
+Flask-Login==0.6.2
+passlib==1.7.4
+gunicorn==21.2.0
