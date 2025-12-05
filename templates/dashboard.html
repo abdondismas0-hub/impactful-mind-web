@@ -1,46 +1,32 @@
-{% extends "public/base.html" %}
+{% extends "base.html" %}
 
 {% block content %}
-<div style="padding-top: 50px;">
-    <h1 style="text-align: center; margin-bottom: 40px;">Admin Dashboard</h1>
+<div class="glass-panel" style="padding: 40px; text-align: center;">
+    <h1 style="color: var(--accent-color);">Admin Dashboard</h1>
+    <p>Karibu kwenye paneli ya udhibiti.</p>
     
-    <div class="stats-grid">
-        <div class="glass-panel stat-card">
-            <h2>{{ total_posts }}</h2>
-            <p>Total Posts</p>
-        </div>
-        <div class="glass-panel stat-card">
-            <h2>{{ total_books }}</h2>
-            <p>Total Books</p>
-        </div>
-    </div>
-    
-    <div class="admin-actions">
-        <!-- POSTS ACTIONS -->
-        <div class="glass-panel action-card">
-            <h3>Daily Posts</h3>
-            <a href="{{ url_for('add_post') }}" class="btn" style="background-color: #f1c40f; color: #0c1422; width: 100%;">+ Add New Post</a>
-            <!-- Note: Tulitarajia kuwa na edit/delete, lakini kwa sasa tunachapa pekee -->
-        </div>
-
-        <!-- LIBRARY ACTIONS -->
-        <div class="glass-panel action-card">
-            <h3>Library / Maktaba</h3>
-            <a href="{{ url_for('add_book') }}" class="btn" style="background-color: #3498db; width: 100%;">+ Add New Book/PDF</a>
-            <!-- Note: Tulitarajia kuwa na edit/delete, lakini kwa sasa tunapakia pekee -->
+    <div style="display: flex; gap: 20px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
+        <!-- Card 1: Books -->
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; width: 200px;">
+            <h2 style="font-size: 3rem; margin: 0;">{{ total_books }}</h2>
+            <p>Vitabu</p>
         </div>
         
-        <!-- NEW: ABOUT US ACTION -->
-        <div class="glass-panel action-card" style="border: 2px solid #e74c3c;">
-            <h3>Taarifa za Mwanzilishi</h3>
-            <a href="{{ url_for('edit_about') }}" class="btn" style="background-color: #e74c3c; width: 100%;">✏️ Hariri Picha/Maelezo</a>
+        <!-- Card 2: Posts -->
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; width: 200px;">
+            <h2 style="font-size: 3rem; margin: 0;">{{ total_posts }}</h2>
+            <p>Posts</p>
         </div>
-        <!------------------------->
     </div>
 
-    <div style="text-align: center; margin-top: 50px;">
-        <a href="{{ url_for('admin_logout') }}" class="btn" style="background-color: #2c3e50; padding: 10px 30px;">Logout</a>
+    <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin-left: auto; margin-right: auto;">
+        <a href="{{ url_for('add_book') }}" class="btn" style="background-color: #3498db;">+ Ongeza Kitabu (PDF)</a>
+        <a href="{{ url_for('add_post') }}" class="btn" style="background-color: #f1c40f; color: black;">+ Andika Post Mpya</a>
+        <a href="{{ url_for('edit_about') }}" class="btn" style="background-color: #e67e22;">Hariri 'About Founder'</a>
     </div>
+
+    <br><br>
+    <a href="{{ url_for('admin_logout') }}" style="color: #e74c3c;">Logout</a>
 </div>
 {% endblock %}
 
