@@ -4,17 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Impactful Mind - {{ title }}</title>
+    <!-- Link to CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* CSS Maalum kwa Kiduara cha Njano (Menu Toggle) */
         .menu-toggle-btn {
             position: fixed;
             top: 20px;
             left: 20px;
             width: 50px;
             height: 50px;
-            background-color: #f1c40f; /* Rangi ya Njano */
+            background-color: #f1c40f;
             color: #0c1422;
             border-radius: 50%;
             display: flex;
@@ -27,21 +27,12 @@
             border: none;
             transition: transform 0.3s;
         }
-        .menu-toggle-btn:hover {
-            transform: scale(1.1);
-        }
+        .menu-toggle-btn:hover { transform: scale(1.1); }
         
-        /* Sidebar Hidden by Default on Mobile */
         @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            .sidebar.active {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-left: 0;
-            }
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { margin-left: 0; }
         }
     </style>
 </head>
@@ -52,35 +43,26 @@
         <i class="fas fa-bars"></i>
     </button>
 
-    <!-- SIDEBAR NAVIGATION -->
+    <!-- SIDEBAR -->
     <nav class="sidebar" id="sidebar">
-        <div class="brand" style="margin-top: 60px;">Impactful Mind</div> <!-- Spacing for button -->
+        <div class="brand" style="margin-top: 60px;">Impactful Mind</div>
         <ul class="nav-links">
-            <!-- VIUNGO VILIVYOONEKANA KWA USERS TU -->
             <li><a href="{{ url_for('home') }}" class="{{ 'active' if title=='Nyumbani' else '' }}"><i class="fas fa-home"></i> Nyumbani</a></li>
             <li><a href="{{ url_for('posts') }}" class="{{ 'active' if title=='Daily Posts' else '' }}"><i class="fas fa-newspaper"></i> Daily Posts</a></li>
             <li><a href="{{ url_for('library') }}" class="{{ 'active' if title=='Maktaba' else '' }}"><i class="fas fa-book"></i> Library</a></li>
             <li><a href="{{ url_for('contact') }}" class="{{ 'active' if title=='Wasiliana Nasi' else '' }}"><i class="fas fa-envelope"></i> Contact Us</a></li>
-            
-            <!-- ADMIN LINK IMEONDOLEWA HAPA! -->
-            <!-- Admin lazima aandike /admin_login kwenye browser -->
+            <!-- ADMIN LINK IMEFICHA (Inapatikana kwa /admin_login tu) -->
         </ul>
-        <div class="sidebar-footer">
-            &copy; 2024 Impactful Mind
-        </div>
+        <div class="sidebar-footer">&copy; 2024 Impactful Mind</div>
     </nav>
 
-    <!-- MAIN CONTENT AREA -->
+    <!-- MAIN CONTENT -->
     <div class="main-content" id="main-content">
-        
-        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div style="margin-top: 60px;"> <!-- Spacing for button -->
+                <div style="margin-top: 60px;">
                 {% for category, message in messages %}
-                    <div class="glass-panel" style="background: rgba(0, 200, 0, 0.2); border-left: 5px solid #2ecc71; padding: 15px;">
-                        {{ message }}
-                    </div>
+                    <div class="glass-panel" style="padding: 15px; border-left: 5px solid #2ecc71;">{{ message }}</div>
                 {% endfor %}
                 </div>
             {% endif %}
@@ -107,11 +89,9 @@
 
     <script>
         function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('active');
+            document.getElementById('sidebar').classList.toggle('active');
         }
     </script>
-
 </body>
 </html>
 
