@@ -1,42 +1,106 @@
-!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    </head>
-<body>
-    <div class="background-texture"></div> 
+{% extends "base.html" %}
 
-    <main class="content-container" style="max-width: 400px; margin-top: 100px;">
-        <div class="glass-card">
-            <h2 style="text-align: center;">Admin Login</h2>
-            
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div style="padding: 10px; border-radius: 5px; margin-bottom: 10px; background-color: {% if category == 'danger' %}#f8d7da{% else %}#d4edda{% endif %}; border: 1px solid {% if category == 'danger' %}#f5c6cb{% else %}#c3e6cb{% endif %};">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
+{% block content %}
+
+    <!-- 1. SLIDESHOW / CAROUSEL YA POSTS -->
+    <div class="carousel-container" style="margin-bottom: 50px;">
+        {% if carousel_posts %}
+            <h2 style="text-align: center; color: var(--accent-color); margin-bottom: 20px;">Featured Posts</h2>
+            <div class="carousel" id="postCarousel">
+                {% for post in carousel_posts %}
+                <div class="carousel-item" style="background-image: url('{{ url_for('download_book', filename=post.image_file) if post.image_file else 'https://placehold.co/1200x400/1e2e42/ffffff?text=Impactful+Mind' }}');">
+                    <div class="carousel-caption">
+                        <h3>{{ post.title }}</h3>
+                        <p>{{ post.content[:100] }}...</p>
+                        <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn">Soma Zaidi</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <!-- Controls (Zinafanya kazi na JS chini) -->
+            <div class="carousel-controls">
+                <button onclick="plusSlides(-1)">&#10094;</button>
+                <button onclick="plusSlides(1)">&#10095;</button>
+            </div>
+        {% else %}
+            <!-- Ujumbe kama hamna Slides -->
+            <div class="glass-panel" style="text-align: center; padding: 50px;">
+                <h1 style="color: var(--accent-color);">Karibu Impactful Mind</h1>
+                <p>Karibu kwenye maktaba yetu. Posts za slidi zitaonekana hapa admin akiziweka.</p>
+                <a href="{{ url_for('library') }}" class="btn">Ingia Maktaba</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 2. MODERN FOUNDER SECTION -->
+    <section class="glass-panel founder-container">
+        <h2 style="text-align: center; color: var(--accent-color); margin-bottom: 40px;">Kutana na Mwanzilishi</h2>
+        
+        <div class="founder-section-modern">
+            <div class="founder-image-container-modern">
+                {% if about_info and about_info.founder_image %}
+                    <img src="{{ url_for('download_book', filename=about_info.founder_image) }}" class="founder-image-modern">
+                {% else %}
+                    <img src="https://placehold.co/400x400/4c5c6c/ffffff?text=Founder" class="founder-image-modern">
                 {% endif %}
-            {% endwith %}
-
-            <form method="POST" action="{{ url_for('admin_login') }}">
-                <div style="margin-bottom: 15px;">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" name="username" required 
-                           style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;">
+            </div>
+            <div class="founder-text-modern">
+                <h3 class="name-highlight">{{ about_info.founder_name if about_info else 'Mwanzilishi Wetu' }}</h3>
+                <p class="role-highlight">Mwenye Maono na Kiongozi</p>
+                <div class="bio-content">
+                    <p>{{ about_info.founder_bio if about_info else 'Maelezo ya mwanzilishi yatawekwa hapa kupitia Admin Dashboard.' }}</p>
                 </div>
-                <div style="margin-bottom: 20px;">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" required 
-                           style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;">
-                </div>
-                <button type="submit" class="cta-button" style="width: 100%; border: none;">Login</button>
-            </form>
+                <a href="{{ url_for('contact') }}" class="btn contact-btn">Wasiliana Naye</a>
+            </div>
         </div>
-    </main>
-</body>
-</html>
+    </section>
+
+    <!-- 3. LATEST CONTENT -->
+    <section class="latest-content">
+        <div class="glass-panel">
+            <h3 style="color: var(--accent-color);">Latest Posts</h3>
+            <ul class="content-list">
+                {% for post in posts %}
+                    <li><a href="{{ url_for('view_post', post_id=post.id) }}">{{ post.title }}</a></li>
+                {% else %}
+                    <li><p>Hakuna posts bado.</p></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="glass-panel">
+            <h3 style="color: var(--accent-color);">Library Additions</h3>
+            <ul class="content-list">
+                {% for book in books %}
+                    <li><a href="{{ url_for('download_book', filename=book.file_path) }}">{{ book.title }}</a></li>
+                {% else %}
+                    <li><p>Hakuna vitabu bado.</p></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+<script>
+    // JS Rahisi ya Carousel
+    let slideIndex = 1;
+    showSlides(slideIndex);
+
+    function plusSlides(n) { showSlides(slideIndex += n); }
+
+    function showSlides(n) {
+        let i;
+        let slides = document.getElementsByClassName("carousel-item");
+        if (slides.length === 0) return;
+        if (n > slides.length) {slideIndex = 1}
+        if (n < 1) {slideIndex = slides.length}
+        for (i = 0; i < slides.length; i++) {
+            slides[i].style.display = "none";  
+        }
+        slides[slideIndex-1].style.display = "block";  
+    }
+    // Auto Slide
+    setInterval(function() { plusSlides(1); }, 5000);
+</script>
+
+{% endblock %}
+
+
