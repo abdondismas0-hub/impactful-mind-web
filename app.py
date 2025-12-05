@@ -56,7 +56,7 @@ class About(db.Model):
     founder_image = db.Column(db.String(200), nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
-# --- Routes (ZIMEREKEBISHWA - HAKUNA 'public/' WALA 'admin/') ---
+# --- Routes (ZIMEREKEBISHWA KULINGANA NA GITHUB YAKO) ---
 
 @app.route("/")
 def home():
@@ -71,7 +71,7 @@ def home():
         latest_books = []
         about_info = None
         
-    # Sasa inatafuta 'index.html' moja kwa moja (bila public/)
+    # HAPA: Tumetumia 'index.html' kwa sababu ndilo jina la faili lako GitHub
     return render_template('index.html', 
                            title='Nyumbani', 
                            carousel_posts=carousel_posts,
@@ -85,7 +85,6 @@ def library():
         books = Book.query.all()
     except:
         books = []
-    # Sasa inatafuta 'library.html' (bila public/)
     return render_template('library.html', title='Maktaba', books=books)
 
 @app.route("/posts")
@@ -122,7 +121,6 @@ def admin_login():
             return redirect(url_for('admin_dashboard'))
         else:
             flash('Login imeshindikana', 'danger')
-    # Sasa inatafuta 'login.html' (bila admin/)
     return render_template('login.html')
 
 @app.route("/admin")
@@ -134,7 +132,6 @@ def admin_dashboard():
     except:
         total_books = 0
         total_posts = 0
-    # Sasa inatafuta 'dashboard.html' (bila admin/)
     return render_template('dashboard.html', 
                            total_books=total_books, 
                            total_posts=total_posts)
@@ -217,15 +214,19 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- DB INIT ---
+# --- MUHIMU: AUTO-CREATE DATABASE NA ADMIN ---
 with app.app_context():
     try:
         db.create_all()
+        # Create Admin
         if not User.query.filter_by(username='admin').first():
             hashed_pw = sha256_crypt.hash("adminpass")
             user = User(username='admin', password=hashed_pw, is_admin=True)
             db.session.add(user)
             db.session.commit()
+            print("Admin created successfully.")
+        
+        # Create About Info
         if not About.query.first():
             db.session.add(About())
             db.session.commit()
