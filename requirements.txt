@@ -4,3 +4,4 @@ Flask-Login==0.6.3
 Werkzeug==2.3.7
 passlib==1.7.4
 gunicorn==21.2.0
+email_validator
