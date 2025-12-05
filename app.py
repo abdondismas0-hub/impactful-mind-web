@@ -8,12 +8,12 @@ from passlib.hash import sha256_crypt
 # --- Configuration ---
 app = Flask(__name__)
 
-# Njia Sahihi ya Database kwa Render
+# Njia Sahihi ya Database (Inafanya kazi Render na Pydroid)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'database.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'siri_kali_sana' 
+app.config['SECRET_KEY'] = 'siri_kali_sana_impactful_mind' 
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static/uploads')
 
 db = SQLAlchemy(app)
@@ -56,31 +56,8 @@ class About(db.Model):
     founder_image = db.Column(db.String(200), nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
-# --- MUHIMU: KUUNDA DATABASE KIOTOMATIKI ---
-# Code hii inaendeshwa kila Gunicorn inapoanza
-with app.app_context():
-    db.create_all()
-    
-    # Hakikisha folda ya uploads ipo
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        try:
-            os.makedirs(app.config['UPLOAD_FOLDER'])
-        except:
-            pass
+# --- Routes (Zimesahihishwa: Hakuna folda za public/admin) ---
 
-    # Unda Admin wa Default kama hayupo
-    if not User.query.filter_by(username='admin').first():
-        hashed_pw = sha256_crypt.hash("adminpass")
-        user = User(username='admin', password=hashed_pw, is_admin=True)
-        db.session.add(user)
-        db.session.commit()
-        
-    # Unda About info kama haipo
-    if not About.query.first():
-        db.session.add(About())
-        db.session.commit()
-
-# --- Routes (ZIMEREKEBISHWA - HAKUNA TENA 'public/' au 'admin/') ---
 @app.route("/")
 def home():
     try:
@@ -89,12 +66,12 @@ def home():
         latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
         about_info = About.query.first()
     except:
+        # Ikitokea error ya DB, rudisha tupu ili site isife
         carousel_posts = []
         latest_posts = []
         latest_books = []
         about_info = None
         
-    # Tumetoa 'public/' -> Sasa ni 'index.html' tu
     return render_template('index.html', 
                            title='Nyumbani', 
                            carousel_posts=carousel_posts,
@@ -131,27 +108,38 @@ def view_post(post_id):
 def download_book(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+# --- Admin Routes ---
+
 @app.route("/admin_login", methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
-        if user and sha256_crypt.verify(password, user.password):
-            login_user(user)
-            return redirect(url_for('admin_dashboard'))
-        else:
-            flash('Login imeshindikana', 'danger')
-    # Tumetoa 'admin/' -> Sasa ni 'login.html' tu
+        
+        try:
+            user = User.query.filter_by(username=username).first()
+            if user and sha256_crypt.verify(password, user.password):
+                login_user(user)
+                return redirect(url_for('admin_dashboard'))
+            else:
+                flash('Login imeshindikana', 'danger')
+        except:
+            flash('Database Error', 'danger')
+            
     return render_template('login.html')
 
 @app.route("/admin")
 @login_required
 def admin_dashboard():
-    # Tumetoa 'admin/' -> Sasa ni 'dashboard.html' tu
+    try:
+        total_books = Book.query.count()
+        total_posts = Post.query.count()
+    except:
+        total_books = 0
+        total_posts = 0
     return render_template('dashboard.html', 
-                           total_books=Book.query.count(), 
-                           total_posts=Post.query.count())
+                           total_books=total_books, 
+                           total_posts=total_posts)
 
 @app.route('/admin/add_post', methods=['GET', 'POST'])
 @login_required
@@ -160,41 +148,74 @@ def add_post():
         title = request.form.get('title')
         content = request.form.get('content')
         is_carousel = request.form.get('is_carousel') == 'on'
+        
         image = request.files.get('image_file')
         image_filename = None
+        
         if image and image.filename != '':
+            if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                os.makedirs(app.config['UPLOAD_FOLDER'])
             image_filename = "Post_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
+            
         new_post = Post(title=title, content=content, image_file=image_filename, is_carousel=is_carousel)
         db.session.add(new_post)
         db.session.commit()
         return redirect(url_for('admin_dashboard'))
+        
     return render_template('add_post.html')
 
 @app.route('/admin/add_book', methods=['GET', 'POST'])
 @login_required
 def add_book():
-    # ... (Logic ingekaa hapa)
-    return render_template('add_book.html') # Placeholder
+    if request.method == 'POST':
+        title = request.form.get('title')
+        author = request.form.get('author')
+        description = request.form.get('description')
+        category = request.form.get('category')
+        file = request.files.get('pdf_file')
+        
+        if not os.path.exists(app.config['UPLOAD_FOLDER']):
+            os.makedirs(app.config['UPLOAD_FOLDER'])
+
+        if file and file.filename != '':
+            filename = "Book_" + datetime.now().strftime("%Y%m%d%H%M%S") + '.pdf'
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            
+            new_book = Book(title=title, author=author, description=description, category=category, file_path=filename)
+            db.session.add(new_book)
+            db.session.commit()
+            flash('Kitabu kimepakiwa!', 'success')
+            return redirect(url_for('admin_dashboard'))
+    return render_template('add_book.html')
 
 @app.route('/admin/edit_about', methods=['GET', 'POST'])
 @login_required
 def edit_about():
-    about_info = About.query.first()
-    if not about_info:
-        about_info = About()
-        db.session.add(about_info)
-        db.session.commit()
+    try:
+        about_info = About.query.first()
+        if not about_info:
+            about_info = About()
+            db.session.add(about_info)
+            db.session.commit()
+    except:
+        return "Database Error in About Section"
+        
     if request.method == 'POST':
         about_info.founder_name = request.form.get('founder_name')
         about_info.founder_bio = request.form.get('founder_bio')
+        
         image = request.files.get('founder_image')
         if image and image.filename != '':
+            if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                os.makedirs(app.config['UPLOAD_FOLDER'])
             image_filename = "Founder_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
             about_info.founder_image = image_filename
+            
         db.session.commit()
         return redirect(url_for('admin_dashboard'))
+        
     return render_template('edit_about.html', about_info=about_info)
 
 @app.route('/admin_logout')
@@ -202,6 +223,26 @@ def edit_about():
 def admin_logout():
     logout_user()
     return redirect(url_for('home'))
+
+# --- DB INIT KWA AJILI YA RENDER ---
+# Hii inahakikisha DB inajengeka kwenye Gunicorn start
+with app.app_context():
+    try:
+        db.create_all()
+        # Create Admin
+        if not User.query.filter_by(username='admin').first():
+            hashed_pw = sha256_crypt.hash("adminpass")
+            user = User(username='admin', password=hashed_pw, is_admin=True)
+            db.session.add(user)
+            db.session.commit()
+            print("Admin created successfully.")
+        
+        # Create About
+        if not About.query.first():
+            db.session.add(About())
+            db.session.commit()
+    except Exception as e:
+        print(f"DB Init Error: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)
