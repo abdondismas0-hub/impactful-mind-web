@@ -1,5 +1,3 @@
-# app.py - Toleo la Render (Database Auto-Create)
-
 import os
 from datetime import datetime
 from flask import Flask, render_template, url_for, flash, redirect, request, send_from_directory
@@ -82,7 +80,7 @@ with app.app_context():
         db.session.add(About())
         db.session.commit()
 
-# --- Routes ---
+# --- Routes (ZIMEREKEBISHWA - HAKUNA TENA 'public/' au 'admin/') ---
 @app.route("/")
 def home():
     try:
@@ -96,7 +94,8 @@ def home():
         latest_books = []
         about_info = None
         
-    return render_template('public/index.html', 
+    # Tumetoa 'public/' -> Sasa ni 'index.html' tu
+    return render_template('index.html', 
                            title='Nyumbani', 
                            carousel_posts=carousel_posts,
                            posts=latest_posts, 
@@ -109,7 +108,7 @@ def library():
         books = Book.query.all()
     except:
         books = []
-    return render_template('public/library.html', title='Maktaba', books=books)
+    return render_template('library.html', title='Maktaba', books=books)
 
 @app.route("/posts")
 def posts():
@@ -117,16 +116,16 @@ def posts():
         posts = Post.query.all()
     except:
         posts = []
-    return render_template('public/posts.html', title='Daily Posts', posts=posts)
+    return render_template('posts.html', title='Daily Posts', posts=posts)
 
 @app.route("/contact")
 def contact():
-    return render_template('public/contact.html', title='Wasiliana Nasi')
+    return render_template('contact.html', title='Wasiliana Nasi')
 
 @app.route('/post/<int:post_id>')
 def view_post(post_id):
     post = Post.query.get_or_404(post_id)
-    return render_template('public/view_post.html', title=post.title, post=post)
+    return render_template('view_post.html', title=post.title, post=post)
 
 @app.route('/download/<filename>')
 def download_book(filename):
@@ -143,16 +142,17 @@ def admin_login():
             return redirect(url_for('admin_dashboard'))
         else:
             flash('Login imeshindikana', 'danger')
-    return render_template('admin/login.html')
+    # Tumetoa 'admin/' -> Sasa ni 'login.html' tu
+    return render_template('login.html')
 
 @app.route("/admin")
 @login_required
 def admin_dashboard():
-    return render_template('admin/dashboard.html', 
+    # Tumetoa 'admin/' -> Sasa ni 'dashboard.html' tu
+    return render_template('dashboard.html', 
                            total_books=Book.query.count(), 
                            total_posts=Post.query.count())
 
-# ... (Routes za kuongeza post/book zinabaki kama zilivyo) ...
 @app.route('/admin/add_post', methods=['GET', 'POST'])
 @login_required
 def add_post():
@@ -169,12 +169,13 @@ def add_post():
         db.session.add(new_post)
         db.session.commit()
         return redirect(url_for('admin_dashboard'))
-    return render_template('admin/add_post.html')
+    return render_template('add_post.html')
 
 @app.route('/admin/add_book', methods=['GET', 'POST'])
 @login_required
 def add_book():
-    return render_template('admin/add_book.html') # Placeholder
+    # ... (Logic ingekaa hapa)
+    return render_template('add_book.html') # Placeholder
 
 @app.route('/admin/edit_about', methods=['GET', 'POST'])
 @login_required
@@ -194,7 +195,7 @@ def edit_about():
             about_info.founder_image = image_filename
         db.session.commit()
         return redirect(url_for('admin_dashboard'))
-    return render_template('admin/edit_about.html', about_info=about_info)
+    return render_template('edit_about.html', about_info=about_info)
 
 @app.route('/admin_logout')
 @login_required
