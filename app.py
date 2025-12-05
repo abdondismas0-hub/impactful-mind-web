@@ -8,7 +8,7 @@ from passlib.hash import sha256_crypt
 # --- Configuration ---
 app = Flask(__name__)
 
-# Njia Sahihi ya Database (Inafanya kazi Render na Pydroid)
+# Njia Sahihi ya Database (Absolute Path)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'database.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
@@ -56,7 +56,7 @@ class About(db.Model):
     founder_image = db.Column(db.String(200), nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
-# --- Routes (Zimesahihishwa: Hakuna folda za public/admin) ---
+# --- Routes ---
 
 @app.route("/")
 def home():
@@ -66,7 +66,6 @@ def home():
         latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
         about_info = About.query.first()
     except:
-        # Ikitokea error ya DB, rudisha tupu ili site isife
         carousel_posts = []
         latest_posts = []
         latest_books = []
@@ -124,7 +123,7 @@ def admin_login():
             else:
                 flash('Login imeshindikana', 'danger')
         except:
-            flash('Database Error', 'danger')
+            flash('Database Error - Jaribu tena', 'danger')
             
     return render_template('login.html')
 
@@ -199,7 +198,7 @@ def edit_about():
             db.session.add(about_info)
             db.session.commit()
     except:
-        return "Database Error in About Section"
+        return "Database Error"
         
     if request.method == 'POST':
         about_info.founder_name = request.form.get('founder_name')
@@ -224,12 +223,12 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- DB INIT KWA AJILI YA RENDER ---
-# Hii inahakikisha DB inajengeka kwenye Gunicorn start
+# --- MUHIMU: AUTO-CREATE DATABASE NA ADMIN ---
+# Hii inakaa nje ya 'if __name__ == __main__' ili Gunicorn iione
 with app.app_context():
     try:
         db.create_all()
-        # Create Admin
+        # Create Admin (admin/adminpass)
         if not User.query.filter_by(username='admin').first():
             hashed_pw = sha256_crypt.hash("adminpass")
             user = User(username='admin', password=hashed_pw, is_admin=True)
@@ -237,7 +236,7 @@ with app.app_context():
             db.session.commit()
             print("Admin created successfully.")
         
-        # Create About
+        # Create About Info
         if not About.query.first():
             db.session.add(About())
             db.session.commit()
