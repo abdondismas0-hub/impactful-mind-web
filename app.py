@@ -8,7 +8,7 @@ from passlib.hash import sha256_crypt
 # --- Configuration ---
 app = Flask(__name__)
 
-# Njia Sahihi ya Database
+# Njia Sahihi ya Database kwa Render na Pydroid
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'database.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
@@ -25,7 +25,7 @@ login_manager.login_message_category = 'info'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- Models ---
+# --- Models (HIZI HAZIJABADILIKA) ---
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
@@ -56,7 +56,7 @@ class About(db.Model):
     founder_image = db.Column(db.String(200), nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
-# --- Routes (ZIMEREKEBISHWA KULINGANA NA GITHUB YAKO) ---
+# --- Routes (ZIMEREKEBISHWA NJIA ZAKE TU) ---
 
 @app.route("/")
 def home():
@@ -71,7 +71,7 @@ def home():
         latest_books = []
         about_info = None
         
-    # HAPA: Tumetumia 'index.html' kwa sababu ndilo jina la faili lako GitHub
+    # HAPA: Inaita 'index.html' moja kwa moja
     return render_template('index.html', 
                            title='Nyumbani', 
                            carousel_posts=carousel_posts,
@@ -85,6 +85,7 @@ def library():
         books = Book.query.all()
     except:
         books = []
+    # HAPA: Inaita 'library.html' moja kwa moja
     return render_template('library.html', title='Maktaba', books=books)
 
 @app.route("/posts")
@@ -93,15 +94,18 @@ def posts():
         posts = Post.query.all()
     except:
         posts = []
+    # HAPA: Inaita 'posts.html' moja kwa moja
     return render_template('posts.html', title='Daily Posts', posts=posts)
 
 @app.route("/contact")
 def contact():
+    # HAPA: Inaita 'contact.html' moja kwa moja
     return render_template('contact.html', title='Wasiliana Nasi')
 
 @app.route('/post/<int:post_id>')
 def view_post(post_id):
     post = Post.query.get_or_404(post_id)
+    # HAPA: Inaita 'view_post.html' moja kwa moja
     return render_template('view_post.html', title=post.title, post=post)
 
 @app.route('/download/<filename>')
@@ -121,6 +125,7 @@ def admin_login():
             return redirect(url_for('admin_dashboard'))
         else:
             flash('Login imeshindikana', 'danger')
+    # HAPA: Inaita 'login.html' moja kwa moja
     return render_template('login.html')
 
 @app.route("/admin")
@@ -132,6 +137,7 @@ def admin_dashboard():
     except:
         total_books = 0
         total_posts = 0
+    # HAPA: Inaita 'dashboard.html' moja kwa moja
     return render_template('dashboard.html', 
                            total_books=total_books, 
                            total_posts=total_posts)
@@ -156,6 +162,7 @@ def add_post():
         db.session.add(new_post)
         db.session.commit()
         return redirect(url_for('admin_dashboard'))
+    # HAPA: Inaita 'add_post.html'
     return render_template('add_post.html')
 
 @app.route('/admin/add_book', methods=['GET', 'POST'])
@@ -180,6 +187,7 @@ def add_book():
             db.session.commit()
             flash('Kitabu kimepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
+    # HAPA: Inaita 'add_book.html'
     return render_template('add_book.html')
 
 @app.route('/admin/edit_about', methods=['GET', 'POST'])
@@ -206,6 +214,7 @@ def edit_about():
             about_info.founder_image = image_filename
         db.session.commit()
         return redirect(url_for('admin_dashboard'))
+    # HAPA: Inaita 'edit_about.html'
     return render_template('edit_about.html', about_info=about_info)
 
 @app.route('/admin_logout')
@@ -214,19 +223,15 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- MUHIMU: AUTO-CREATE DATABASE NA ADMIN ---
+# --- DB INIT ---
 with app.app_context():
     try:
         db.create_all()
-        # Create Admin
         if not User.query.filter_by(username='admin').first():
             hashed_pw = sha256_crypt.hash("adminpass")
             user = User(username='admin', password=hashed_pw, is_admin=True)
             db.session.add(user)
             db.session.commit()
-            print("Admin created successfully.")
-        
-        # Create About Info
         if not About.query.first():
             db.session.add(About())
             db.session.commit()
