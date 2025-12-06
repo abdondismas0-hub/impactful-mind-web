@@ -2,104 +2,99 @@
 
 {% block content %}
 
-    <!-- 1. SLIDESHOW / CAROUSEL YA POSTS -->
-    <div class="carousel-container" style="margin-bottom: 50px;">
+    <!-- HERO / SLIDESHOW SECTION -->
+    <div class="carousel-container" style="margin-bottom: 40px; position: relative;">
         {% if carousel_posts %}
-            <h2 style="text-align: center; color: var(--accent-color); margin-bottom: 20px;">Featured Posts</h2>
             <div class="carousel" id="postCarousel">
                 {% for post in carousel_posts %}
-                <div class="carousel-item" style="background-image: url('{{ url_for('download_book', filename=post.image_file) if post.image_file else 'https://placehold.co/1200x400/1e2e42/ffffff?text=Impactful+Mind' }}');">
-                    <div class="carousel-caption">
-                        <h3>{{ post.title }}</h3>
-                        <p>{{ post.content[:100] }}...</p>
-                        <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn">Soma Zaidi</a>
+                <div class="carousel-item" style="display: {{ 'block' if loop.first else 'none' }}; background-image: url('{{ url_for('download_book', filename=post.image_file) }}'); height: 400px; background-size: cover; background-position: center; border-radius: 15px; position: relative;">
+                    <div class="carousel-caption" style="position: absolute; bottom: 0; background: rgba(0,0,0,0.7); width: 100%; padding: 20px; color: white; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
+                        <h3 style="color: #f1c40f; margin: 0 0 10px 0;">{{ post.title }}</h3>
+                        <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn" style="padding: 5px 15px; font-size: 0.8rem;">Soma Sasa</a>
                     </div>
                 </div>
                 {% endfor %}
             </div>
-            <!-- Controls (Zinafanya kazi na JS chini) -->
-            <div class="carousel-controls">
-                <button onclick="plusSlides(-1)">&#10094;</button>
-                <button onclick="plusSlides(1)">&#10095;</button>
-            </div>
         {% else %}
-            <!-- Ujumbe kama hamna Slides -->
-            <div class="glass-panel" style="text-align: center; padding: 50px;">
-                <h1 style="color: var(--accent-color);">Karibu Impactful Mind</h1>
-                <p>Karibu kwenye maktaba yetu. Posts za slidi zitaonekana hapa admin akiziweka.</p>
+            <!-- Kama hamna posts za carousel, onyesha hapa -->
+            <div class="glass-panel" style="text-align: center; padding: 60px 20px;">
+                <h1 style="color: #f1c40f; font-size: 2.5rem;">Karibu Impactful Mind</h1>
+                <p style="color: white; font-size: 1.2rem;">Jenga Akili Yako, Badilisha Maisha Yako.</p>
+                <br>
                 <a href="{{ url_for('library') }}" class="btn">Ingia Maktaba</a>
             </div>
         {% endif %}
     </div>
 
-    <!-- 2. MODERN FOUNDER SECTION -->
-    <section class="glass-panel founder-container">
-        <h2 style="text-align: center; color: var(--accent-color); margin-bottom: 40px;">Kutana na Mwanzilishi</h2>
-        
-        <div class="founder-section-modern">
-            <div class="founder-image-container-modern">
-                {% if about_info and about_info.founder_image %}
-                    <img src="{{ url_for('download_book', filename=about_info.founder_image) }}" class="founder-image-modern">
-                {% else %}
-                    <img src="https://placehold.co/400x400/4c5c6c/ffffff?text=Founder" class="founder-image-modern">
-                {% endif %}
-            </div>
-            <div class="founder-text-modern">
-                <h3 class="name-highlight">{{ about_info.founder_name if about_info else 'Mwanzilishi Wetu' }}</h3>
-                <p class="role-highlight">Mwenye Maono na Kiongozi</p>
-                <div class="bio-content">
-                    <p>{{ about_info.founder_bio if about_info else 'Maelezo ya mwanzilishi yatawekwa hapa kupitia Admin Dashboard.' }}</p>
+    <!-- FOUNDER SECTION -->
+    <section class="glass-panel" style="display: flex; flex-wrap: wrap; gap: 30px; align-items: center; padding: 40px;">
+        <div style="flex: 0 0 200px; text-align: center;">
+            {% if about_info and about_info.founder_image %}
+                <img src="{{ url_for('download_book', filename=about_info.founder_image) }}" style="width: 150px; height: 150px; border-radius: 50%; border: 4px solid #f1c40f; object-fit: cover;">
+            {% else %}
+                <div style="width: 150px; height: 150px; border-radius: 50%; background: #333; margin: 0 auto; display: flex; align-items: center; justify-content: center; border: 4px solid #f1c40f;">
+                    <i class="fas fa-user fa-3x" style="color: #555;"></i>
                 </div>
-                <a href="{{ url_for('contact') }}" class="btn contact-btn">Wasiliana Naye</a>
-            </div>
+            {% endif %}
+        </div>
+        <div style="flex: 1;">
+            <h2 style="color: #f1c40f; margin-top: 0;">Kutana na Mwanzilishi</h2>
+            <h3 style="color: white; margin-bottom: 10px;">{{ about_info.founder_name if about_info else 'Jina la Founder' }}</h3>
+            <p style="color: #ddd; line-height: 1.6;">
+                {{ about_info.founder_bio if about_info else 'Maelezo ya founder yataonekana hapa...' }}
+            </p>
+            <br>
+            <a href="{{ url_for('contact') }}" class="btn" style="background-color: #3498db;">Wasiliana Naye</a>
         </div>
     </section>
 
-    <!-- 3. LATEST CONTENT -->
-    <section class="latest-content">
-        <div class="glass-panel">
-            <h3 style="color: var(--accent-color);">Latest Posts</h3>
-            <ul class="content-list">
+    <!-- LATEST CONTENT GRID -->
+    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+        <!-- Latest Posts Column -->
+        <div class="glass-panel" style="flex: 1 1 300px;">
+            <h3 style="color: #f1c40f; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Machapisho Mapya</h3>
+            <ul style="list-style: none; padding: 0;">
                 {% for post in posts %}
-                    <li><a href="{{ url_for('view_post', post_id=post.id) }}">{{ post.title }}</a></li>
+                    <li style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <a href="{{ url_for('view_post', post_id=post.id) }}" style="color: white; text-decoration: none; font-weight: bold;">{{ post.title }}</a>
+                        <br>
+                        <small style="color: #888;">{{ post.date_posted.strftime('%d %b %Y') }}</small>
+                    </li>
                 {% else %}
-                    <li><p>Hakuna posts bado.</p></li>
+                    <li><p>Hakuna machapisho bado.</p></li>
                 {% endfor %}
             </ul>
         </div>
-        <div class="glass-panel">
-            <h3 style="color: var(--accent-color);">Library Additions</h3>
-            <ul class="content-list">
+
+        <!-- Library Column -->
+        <div class="glass-panel" style="flex: 1 1 300px;">
+            <h3 style="color: #f1c40f; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Vitabu Vipya</h3>
+            <ul style="list-style: none; padding: 0;">
                 {% for book in books %}
-                    <li><a href="{{ url_for('download_book', filename=book.file_path) }}">{{ book.title }}</a></li>
+                    <li style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <span style="color: white; font-weight: bold;">{{ book.title }}</span>
+                        <a href="{{ url_for('download_book', filename=book.file_path) }}" style="float: right; color: #3498db;"><i class="fas fa-download"></i> PDF</a>
+                    </li>
                 {% else %}
                     <li><p>Hakuna vitabu bado.</p></li>
                 {% endfor %}
             </ul>
         </div>
-    </section>
+    </div>
 
-<script>
-    // JS Rahisi ya Carousel
-    let slideIndex = 1;
-    showSlides(slideIndex);
-
-    function plusSlides(n) { showSlides(slideIndex += n); }
-
-    function showSlides(n) {
-        let i;
-        let slides = document.getElementsByClassName("carousel-item");
-        if (slides.length === 0) return;
-        if (n > slides.length) {slideIndex = 1}
-        if (n < 1) {slideIndex = slides.length}
-        for (i = 0; i < slides.length; i++) {
-            slides[i].style.display = "none";  
+    <script>
+        // Simple Auto-Carousel Script
+        let slides = document.querySelectorAll('.carousel-item');
+        let index = 0;
+        function nextSlide() {
+            if(slides.length > 0){
+                slides[index].style.display = 'none';
+                index = (index + 1) % slides.length;
+                slides[index].style.display = 'block';
+            }
         }
-        slides[slideIndex-1].style.display = "block";  
-    }
-    // Auto Slide
-    setInterval(function() { plusSlides(1); }, 5000);
-</script>
+        setInterval(nextSlide, 5000); // Change every 5 seconds
+    </script>
 
 {% endblock %}
 
