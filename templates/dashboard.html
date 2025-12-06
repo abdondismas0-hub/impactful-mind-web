@@ -1,32 +1,67 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="glass-panel" style="padding: 40px; text-align: center;">
-    <h1 style="color: var(--accent-color);">Admin Dashboard</h1>
-    <p>Karibu kwenye paneli ya udhibiti.</p>
+<div style="padding-top: 50px;">
     
-    <div style="display: flex; gap: 20px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
-        <!-- Card 1: Books -->
-        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; width: 200px;">
-            <h2 style="font-size: 3rem; margin: 0;">{{ total_books }}</h2>
-            <p>Vitabu</p>
+    <!-- Header -->
+    <div class="glass-panel" style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: var(--accent-color); font-size: 2.5rem; margin-bottom: 10px;">
+            <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+        </h1>
+        <p style="color: #ccc;">Karibu kwenye paneli kuu ya udhibiti wa Impactful Mind.</p>
+    </div>
+    
+    <!-- Takwimu (Stats Cards) -->
+    <div style="display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; margin-bottom: 50px;">
+        
+        <!-- Card ya Vitabu -->
+        <div class="glass-panel" style="flex: 1 1 300px; text-align: center; padding: 40px; border-bottom: 5px solid #3498db;">
+            <i class="fas fa-book fa-3x" style="color: #3498db; margin-bottom: 20px;"></i>
+            <h2 style="font-size: 3.5rem; margin: 0; color: #fff;">{{ total_books }}</h2>
+            <p style="font-size: 1.2rem; color: #aaa;">Jumla ya Vitabu</p>
         </div>
         
-        <!-- Card 2: Posts -->
-        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; width: 200px;">
-            <h2 style="font-size: 3rem; margin: 0;">{{ total_posts }}</h2>
-            <p>Posts</p>
+        <!-- Card ya Posts -->
+        <div class="glass-panel" style="flex: 1 1 300px; text-align: center; padding: 40px; border-bottom: 5px solid #f1c40f;">
+            <i class="fas fa-newspaper fa-3x" style="color: #f1c40f; margin-bottom: 20px;"></i>
+            <h2 style="font-size: 3.5rem; margin: 0; color: #fff;">{{ total_posts }}</h2>
+            <p style="font-size: 1.2rem; color: #aaa;">Daily Posts</p>
         </div>
     </div>
 
-    <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin-left: auto; margin-right: auto;">
-        <a href="{{ url_for('add_book') }}" class="btn" style="background-color: #3498db;">+ Ongeza Kitabu (PDF)</a>
-        <a href="{{ url_for('add_post') }}" class="btn" style="background-color: #f1c40f; color: black;">+ Andika Post Mpya</a>
-        <a href="{{ url_for('edit_about') }}" class="btn" style="background-color: #e67e22;">Hariri 'About Founder'</a>
+    <!-- Menyu ya Matendo (Actions) -->
+    <h2 style="text-align: center; margin-bottom: 30px; color: var(--accent-color);">Chagua Kazi ya Kufanya</h2>
+    
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+        
+        <!-- Ongeza Kitabu -->
+        <a href="{{ url_for('add_book') }}" class="glass-panel" style="flex: 1 1 250px; text-align: center; text-decoration: none; padding: 30px; transition: transform 0.3s; background: rgba(52, 152, 219, 0.2);">
+            <i class="fas fa-plus-circle fa-2x" style="color: #3498db; margin-bottom: 15px;"></i>
+            <h3 style="color: #fff; margin: 0;">Ongeza Kitabu (PDF)</h3>
+        </a>
+
+        <!-- Andika Post -->
+        <a href="{{ url_for('add_post') }}" class="glass-panel" style="flex: 1 1 250px; text-align: center; text-decoration: none; padding: 30px; transition: transform 0.3s; background: rgba(241, 196, 15, 0.2);">
+            <i class="fas fa-pen-nib fa-2x" style="color: #f1c40f; margin-bottom: 15px;"></i>
+            <h3 style="color: #fff; margin: 0;">Andika Post Mpya</h3>
+        </a>
+
+        <!-- Edit Founder -->
+        <a href="{{ url_for('edit_about') }}" class="glass-panel" style="flex: 1 1 250px; text-align: center; text-decoration: none; padding: 30px; transition: transform 0.3s; background: rgba(231, 76, 60, 0.2);">
+            <i class="fas fa-user-edit fa-2x" style="color: #e74c3c; margin-bottom: 15px;"></i>
+            <h3 style="color: #fff; margin: 0;">Hariri 'About Founder'</h3>
+        </a>
+
     </div>
 
-    <br><br>
-    <a href="{{ url_for('admin_logout') }}" style="color: #e74c3c;">Logout</a>
+    <!-- Logout Button -->
+    <div style="text-align: center; margin-top: 60px;">
+        <a href="{{ url_for('admin_logout') }}" class="btn" style="background-color: #c0392b; padding: 12px 40px; font-size: 1.1rem; box-shadow: 0 5px 15px rgba(192, 57, 43, 0.4);">
+            <i class="fas fa-sign-out-alt"></i> Ondoka (Logout)
+        </a>
+    </div>
+
 </div>
 {% endblock %}
+
 
