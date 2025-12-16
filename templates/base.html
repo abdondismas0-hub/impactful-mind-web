@@ -1,45 +1,55 @@
-<!-- templates/admin/add_book.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ongeza Kitabu</title>
+    <title>Impactful Mind</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* CSS ya Menu ya Kiduara */
+        .menu-toggle { position: fixed; top: 20px; left: 20px; width: 50px; height: 50px; background: #f1c40f; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 2000; cursor: pointer; color: #000; }
+        .sidebar { position: fixed; left: -260px; top: 0; width: 250px; height: 100%; background: #0c1422; transition: 0.3s; z-index: 1500; padding-top: 80px; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+        .sidebar.active { left: 0; }
+        .nav-links li a { display: block; padding: 15px 20px; color: white; text-decoration: none; }
+        .nav-links li a:hover { background: rgba(255,255,255,0.1); color: #f1c40f; }
+        .main-content { padding: 20px; margin-left: 0; transition: 0.3s; }
+        @media(min-width: 768px) { .main-content { margin-left: 0; } } /* Sidebar hidden by default on all screens for mobile feel */
+    </style>
 </head>
-<body>
-    <div class="background-texture"></div> 
-    
-    <header class="glass-nav">
-        <nav style="max-width: 90%; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-            <div class="logo"><a href="{{ url_for('admin_dashboard') }}" style="text-decoration: none; color: inherit;">&larr; Admin Dashboard</a></div>
-            <a href="{{ url_for('admin_logout') }}" class="cta-button" style="background: #dc3545; padding: 8px 15px;">Logout</a>
-        </nav>
-    </header>
+<body style="background: #1f4068; color: white; font-family: sans-serif;">
 
-    <main class="content-container" style="max-width: 600px; margin-top: 50px;">
-        <div class="glass-card">
-            <h2 style="text-align: center;">Pakia Kitabu Kipya (PDF)</h2>
-            <form method="POST" enctype="multipart/form-data">
-                <label for="title">Jina la Kitabu:</label>
-                <input type="text" id="title" name="title" required>
+    <!-- Menu Toggle -->
+    <div class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('active')">
+        <i class="fas fa-bars"></i>
+    </div>
 
-                <label for="author">Mwandishi:</label>
-                <input type="text" id="author" name="author">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <h2 style="text-align: center; color: #f1c40f;">Impactful Mind</h2>
+        <ul class="nav-links" style="list-style: none; padding: 0;">
+            <li><a href="{{ url_for('home') }}"><i class="fas fa-home"></i> Nyumbani</a></li>
+            <li><a href="{{ url_for('library') }}"><i class="fas fa-book"></i> Maktaba</a></li>
+            <li><a href="{{ url_for('posts') }}"><i class="fas fa-newspaper"></i> Daily Posts</a></li>
+            <li><a href="{{ url_for('contact') }}"><i class="fas fa-envelope"></i> Wasiliana</a></li>
+            <li><a href="{{ url_for('admin_login') }}" style="color: #e74c3c;"><i class="fas fa-lock"></i> Admin</a></li>
+        </ul>
+    </div>
 
-                <label for="description">Maelezo Mafupi:</label>
-                <textarea id="description" name="description" rows="4"></textarea>
+    <!-- Main Content -->
+    <div class="main-content">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="background: green; padding: 10px; margin-bottom: 20px; border-radius: 5px;">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
 
-                <label for="category">Aina/Kategoria:</label>
-                <input type="text" id="category" name="category">
-
-                <label for="pdf_file">Faili la PDF:</label>
-                <input type="file" id="pdf_file" name="pdf_file" accept=".pdf" required>
-
-                <button type="submit" class="cta-button" style="width: 100%; border: none;">Pakia Kitabu</button>
-            </form>
-        </div>
-    </main>
 </body>
 </html>
+
 
