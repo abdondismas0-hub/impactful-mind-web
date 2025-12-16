@@ -1,140 +1,37 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-    <!-- 1. HERO SECTION / SLIDESHOW (CAROUSEL) -->
-    <!-- Hii inaonyesha picha zinazotembea kama zipo, au ujumbe wa karibu kama hamna -->
-    <div class="carousel-container" style="margin-bottom: 40px; position: relative; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); min-height: 400px;">
-        {% if carousel_posts %}
-            <div class="carousel" id="postCarousel">
-                {% for post in carousel_posts %}
-                <div class="carousel-item" style="display: {{ 'block' if loop.first else 'none' }}; background-image: url('{{ url_for('download_book', filename=post.image_file) }}'); height: 450px; background-size: cover; background-position: center; position: relative;">
-                    <!-- Overlay nyeusi ili maandishi yasomeke -->
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4);"></div>
-                    
-                    <div class="carousel-caption" style="position: absolute; bottom: 0; width: 100%; padding: 30px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); color: white;">
-                        <h2 style="color: #f1c40f; font-size: 2rem; margin-bottom: 10px; text-shadow: 2px 2px 4px #000;">{{ post.title }}</h2>
-                        <p style="font-size: 1.1rem; margin-bottom: 15px;">{{ post.content[:100] }}...</p>
-                        <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn" style="padding: 8px 25px; background-color: #3498db; border: none; color: white; text-decoration: none; border-radius: 5px;">Soma Zaidi</a>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <!-- Ujumbe wa Kukaribisha (Default) kama hamna Slides bado -->
-            <div class="glass-panel" style="text-align: center; padding: 100px 20px; background: linear-gradient(135deg, #1e3c72, #2a5298); height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                <h1 style="color: #f1c40f; font-size: 3rem; margin-bottom: 20px;">Karibu Impactful Mind</h1>
-                <p style="color: white; font-size: 1.3rem; margin-bottom: 30px;">Jenga Akili Yako, Badilisha Maisha Yako.</p>
-                <a href="{{ url_for('library') }}" class="btn" style="padding: 12px 30px; font-size: 1.1rem; background-color: #f1c40f; color: #0c1422; text-decoration: none; border-radius: 25px; font-weight: bold;">Ingia Maktaba &rarr;</a>
-            </div>
-        {% endif %}
+    <!-- HERO SECTION -->
+    <div class="carousel-container" style="margin-bottom: 40px; text-align: center; padding: 100px 20px; background: linear-gradient(135deg, #1e3c72, #2a5298); border-radius: 15px; color: white;">
+        <h1 style="color: #f1c40f; font-size: 3rem; margin-bottom: 20px;">Karibu Impactful Mind</h1>
+        <p style="font-size: 1.3rem; margin-bottom: 30px;">Jenga Akili Yako, Badilisha Maisha Yako.</p>
+        <div style="display: flex; gap: 20px; justify-content: center;">
+            <a href="{{ url_for('library') }}" class="btn" style="background-color: #f1c40f; color: #000; padding: 10px 25px; text-decoration: none; border-radius: 5px;">Ingia Maktaba</a>
+            <a href="{{ url_for('posts') }}" class="btn" style="background-color: #3498db; color: #fff; padding: 10px 25px; text-decoration: none; border-radius: 5px;">Soma Posts</a>
+        </div>
     </div>
 
-    <!-- 2. FOUNDER SECTION (Kutana na Mwanzilishi) -->
-    <!-- Hii inachukua data kutoka Database (Admin Dashboard) -->
-    <section class="glass-panel" style="padding: 40px; margin-bottom: 40px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px;">
-        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 40px;">
-            <!-- Picha ya Founder -->
-            <div style="flex: 1 1 250px; text-align: center;">
-                <div style="width: 200px; height: 200px; margin: 0 auto; border-radius: 50%; overflow: hidden; border: 5px solid #f1c40f; box-shadow: 0 0 20px rgba(241, 196, 15, 0.3);">
-                    {% if about_info and about_info.founder_image %}
-                        <img src="{{ url_for('download_book', filename=about_info.founder_image) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                    {% else %}
-                        <!-- Picha ya Mfano kama hamna picha -->
-                        <div style="width: 100%; height: 100%; background: #2c3e50; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-user fa-5x" style="color: #7f8c8d;"></i>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Maelezo ya Founder -->
-            <div style="flex: 2 1 400px;">
-                <h2 style="color: #f1c40f; border-bottom: 2px solid #f1c40f; display: inline-block; padding-bottom: 5px;">Kutana na Mwanzilishi</h2>
-                <h3 style="color: white; font-size: 1.8rem; margin-top: 15px;">{{ about_info.founder_name if about_info else 'Jina la Mwanzilishi' }}</h3>
-                <p style="color: #ddd; line-height: 1.8; font-size: 1.05rem; margin-bottom: 25px; white-space: pre-wrap;">
-                    {{ about_info.founder_bio if about_info else 'Maelezo kuhusu mwanzilishi na maono ya Impactful Mind yataonekana hapa baada ya kuwekwa kupitia Admin Dashboard.' }}
+    <!-- FOUNDER SECTION -->
+    <section class="glass-panel" style="padding: 40px; margin-bottom: 40px; background: rgba(255,255,255,0.05); border-radius: 15px;">
+        <div style="text-align: center;">
+            <h2 style="color: #f1c40f;">Kutana na Mwanzilishi</h2>
+            <div style="margin-top: 20px;">
+                {% if about_info and about_info.founder_image %}
+                    <img src="{{ url_for('download_book', filename=about_info.founder_image) }}" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #f1c40f;">
+                {% else %}
+                    <div style="width: 150px; height: 150px; background: #333; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; border: 4px solid #f1c40f;">
+                        <span style="color: white; font-size: 3rem;">👤</span>
+                    </div>
+                {% endif %}
+                <h3 style="color: white; margin-top: 15px;">{{ about_info.founder_name if about_info else 'Jina la Founder' }}</h3>
+                <p style="color: #ccc; max-width: 600px; margin: 10px auto;">
+                    {{ about_info.founder_bio if about_info else 'Maelezo yatakuja hapa...' }}
                 </p>
-                <a href="{{ url_for('contact') }}" class="btn" style="background-color: #2ecc71; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;"><i class="fas fa-envelope"></i> Wasiliana Naye</a>
+                <br>
+                <a href="{{ url_for('contact') }}" style="color: #2ecc71;">Wasiliana Naye &rarr;</a>
             </div>
         </div>
     </section>
-
-    <!-- 3. SEHEMU YA CHINI (Machapisho na Vitabu) -->
-    <div style="display: flex; flex-wrap: wrap; gap: 30px;">
-        
-        <!-- Machapisho Mapya -->
-        <div class="glass-panel" style="flex: 1 1 300px; background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 15px;">
-            <h3 style="color: #f1c40f; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <i class="fas fa-newspaper"></i> Machapisho Mapya
-            </h3>
-            <ul style="list-style: none; padding: 0;">
-                {% for post in posts %}
-                    <li style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <a href="{{ url_for('view_post', post_id=post.id) }}" style="color: white; text-decoration: none; font-size: 1.1rem; font-weight: bold; display: block; margin-bottom: 5px;">{{ post.title }}</a>
-                        <small style="color: #aaa;"><i class="far fa-clock"></i> {{ post.date_posted.strftime('%d %b %Y') }}</small>
-                    </li>
-                {% else %}
-                    <li style="color: #888;">Bado hakuna machapisho.</li>
-                {% endfor %}
-            </ul>
-            <div style="text-align: right; margin-top: 20px;">
-                <a href="{{ url_for('posts') }}" style="color: #3498db; text-decoration: none;">Ona Zote &rarr;</a>
-            </div>
-        </div>
-
-        <!-- Vitabu Vipya -->
-        <div class="glass-panel" style="flex: 1 1 300px; background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 15px;">
-            <h3 style="color: #f1c40f; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <i class="fas fa-book"></i> Vitabu Vipya
-            </h3>
-            <ul style="list-style: none; padding: 0;">
-                {% for book in books %}
-                    <li style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span style="color: white; font-weight: bold; display: block;">{{ book.title }}</span>
-                            <small style="color: #aaa;">{{ book.author }}</small>
-                        </div>
-                        <a href="{{ url_for('download_book', filename=book.file_path) }}" style="color: #2ecc71; background: rgba(46, 204, 113, 0.1); padding: 5px 10px; border-radius: 5px; text-decoration: none;">
-                            <i class="fas fa-download"></i> PDF
-                        </a>
-                    </li>
-                {% else %}
-                    <li style="color: #888;">Bado hakuna vitabu.</li>
-                {% endfor %}
-            </ul>
-            <div style="text-align: right; margin-top: 20px;">
-                <a href="{{ url_for('library') }}" style="color: #3498db; text-decoration: none;">Ingia Maktaba &rarr;</a>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- JAVASCRIPT YA SLIDESHOW -->
-    <script>
-        let slideIndex = 0;
-        const slides = document.querySelectorAll('.carousel-item');
-        
-        function showSlides() {
-            if (slides.length === 0) return;
-            
-            for (let i = 0; i < slides.length; i++) {
-                slides[i].style.display = "none";  
-            }
-            
-            slideIndex++;
-            if (slideIndex > slides.length) {slideIndex = 1}    
-            
-            slides[slideIndex-1].style.display = "block";  
-            setTimeout(showSlides, 5000); // Badilisha picha kila baada ya sekunde 5
-        }
-
-        // Anza slideshow kama kuna slides
-        if (slides.length > 0) {
-            showSlides();
-        }
-    </script>
-
 {% endblock %}
 
 
