@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'database.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'impactful_mind_secret_key_2025' 
+app.config['SECRET_KEY'] = 'impactful_pro_key_2025' 
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static/uploads')
 
 db = SQLAlchemy(app)
@@ -22,6 +22,17 @@ login_manager.login_message_category = 'info'
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+# --- CONTEXT PROCESSOR (HII NDIO SIRI YA KUZUIA 500 ERROR) ---
+# Hii inahakikisha 'about_info' inapatikana kwenye KILA ukurasa (Footer, Navbar, n.k.)
+# bila kuiandika kwenye kila route.
+@app.context_processor
+def inject_global_vars():
+    try:
+        about_info = About.query.first()
+    except:
+        about_info = None
+    return dict(about_info=about_info)
 
 # --- MODELS ---
 class User(db.Model, UserMixin):
@@ -50,8 +61,11 @@ class Book(db.Model):
 class About(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     founder_name = db.Column(db.String(100), nullable=False, default="Jina la Founder")
-    founder_bio = db.Column(db.Text, nullable=False, default="Maelezo...")
+    founder_bio = db.Column(db.Text, nullable=False, default="Maelezo ya Founder...")
     founder_image = db.Column(db.String(200), nullable=True)
+    # TUMEONGEZA HIZI:
+    mission = db.Column(db.Text, nullable=False, default="Kujenga kizazi chenye fikra chanya.")
+    vision = db.Column(db.Text, nullable=False, default="Kuwa maktaba bora ya kidijitali.")
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
 # --- ROUTES ---
@@ -62,14 +76,16 @@ def home():
         carousel_posts = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
         latest_posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
         latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
-        about_info = About.query.first()
     except:
         carousel_posts = []
         latest_posts = []
         latest_books = []
-        about_info = None
         
-    return render_template('index.html', title='Nyumbani', carousel_posts=carousel_posts, posts=latest_posts, books=latest_books, about_info=about_info)
+    return render_template('index.html', 
+                           title='Nyumbani', 
+                           carousel_posts=carousel_posts,
+                           posts=latest_posts, 
+                           books=latest_books)
 
 @app.route("/library")
 def library():
@@ -77,7 +93,6 @@ def library():
         books = Book.query.all()
     except:
         books = []
-    # Inatafuta templates/library.html
     return render_template('library.html', title='Maktaba', books=books)
 
 @app.route("/posts")
@@ -86,16 +101,16 @@ def posts():
         posts = Post.query.all()
     except:
         posts = []
-    # Inatafuta templates/posts.html
     return render_template('posts.html', title='Daily Posts', posts=posts)
 
 @app.route("/contact")
 def contact():
-    # Inatafuta templates/contact.html
+    # Hili faili lilikuwa halipo, sasa tutaliunda
     return render_template('contact.html', title='Wasiliana Nasi')
 
 @app.route('/post/<int:post_id>')
 def view_post(post_id):
+    # Hili faili lilikuwa halipo, sasa tutaliunda
     post = Post.query.get_or_404(post_id)
     return render_template('view_post.html', title=post.title, post=post)
 
@@ -103,7 +118,7 @@ def view_post(post_id):
 def download_book(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-# --- ADMIN ---
+# --- ADMIN ROUTES ---
 
 @app.route("/admin_login", methods=['GET', 'POST'])
 def admin_login():
@@ -116,7 +131,7 @@ def admin_login():
                 login_user(user)
                 return redirect(url_for('admin_dashboard'))
             else:
-                flash('Jina au Password sio sahihi', 'danger')
+                flash('Login imeshindikana', 'danger')
         except:
             flash('DB Error', 'danger')
     return render_template('login.html')
@@ -151,9 +166,7 @@ def add_post():
         new_post = Post(title=title, content=content, image_file=image_filename, is_carousel=is_carousel)
         db.session.add(new_post)
         db.session.commit()
-        flash('Post imehifadhiwa!', 'success')
         return redirect(url_for('admin_dashboard'))
-    # Inatafuta templates/add_post.html
     return render_template('add_post.html')
 
 @app.route('/admin/add_book', methods=['GET', 'POST'])
@@ -176,9 +189,7 @@ def add_book():
             new_book = Book(title=title, author=author, description=description, category=category, file_path=filename)
             db.session.add(new_book)
             db.session.commit()
-            flash('Kitabu kimepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
-    # Inatafuta templates/add_book.html
     return render_template('add_book.html')
 
 @app.route('/admin/edit_about', methods=['GET', 'POST'])
@@ -191,11 +202,15 @@ def edit_about():
             db.session.add(about_info)
             db.session.commit()
     except:
-        return "DB Error"
+        return "Database Error"
         
     if request.method == 'POST':
         about_info.founder_name = request.form.get('founder_name')
         about_info.founder_bio = request.form.get('founder_bio')
+        # HAPA: Tunahifadhi Mission na Vision pia
+        about_info.mission = request.form.get('mission')
+        about_info.vision = request.form.get('vision')
+        
         image = request.files.get('founder_image')
         if image and image.filename != '':
             if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -204,9 +219,8 @@ def edit_about():
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
             about_info.founder_image = image_filename
         db.session.commit()
-        flash('Taarifa zimebadilishwa!', 'success')
+        flash('Taarifa zimesasishwa!', 'success')
         return redirect(url_for('admin_dashboard'))
-    # Inatafuta templates/edit_about.html
     return render_template('edit_about.html', about_info=about_info)
 
 @app.route('/admin_logout')
@@ -215,7 +229,7 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- AUTO-DB ---
+# --- AUTO-CREATE DATABASE ---
 with app.app_context():
     try:
         db.create_all()
