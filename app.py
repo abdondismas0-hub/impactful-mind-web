@@ -7,14 +7,11 @@ from passlib.hash import sha256_crypt
 
 # --- CONFIGURATION ---
 app = Flask(__name__)
-
-# Njia Sahihi ya Database (Inafanya kazi Render na Pydroid)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'database.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# Secret Key mpya kusafisha errors za session
-app.config['SECRET_KEY'] = 'impactful_mind_premium_2025_key' 
+app.config['SECRET_KEY'] = 'impactful_mind_secret_key_2025' 
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static/uploads')
 
 db = SQLAlchemy(app)
@@ -57,7 +54,7 @@ class About(db.Model):
     founder_image = db.Column(db.String(200), nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
-# --- ROUTES (NJIA ZA KURASA - FLAT STRUCTURE) ---
+# --- ROUTES ---
 
 @app.route("/")
 def home():
@@ -80,6 +77,7 @@ def library():
         books = Book.query.all()
     except:
         books = []
+    # Inatafuta templates/library.html
     return render_template('library.html', title='Maktaba', books=books)
 
 @app.route("/posts")
@@ -88,10 +86,12 @@ def posts():
         posts = Post.query.all()
     except:
         posts = []
+    # Inatafuta templates/posts.html
     return render_template('posts.html', title='Daily Posts', posts=posts)
 
 @app.route("/contact")
 def contact():
+    # Inatafuta templates/contact.html
     return render_template('contact.html', title='Wasiliana Nasi')
 
 @app.route('/post/<int:post_id>')
@@ -103,7 +103,7 @@ def view_post(post_id):
 def download_book(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-# --- ADMIN ROUTES ---
+# --- ADMIN ---
 
 @app.route("/admin_login", methods=['GET', 'POST'])
 def admin_login():
@@ -112,15 +112,13 @@ def admin_login():
         password = request.form.get('password')
         try:
             user = User.query.filter_by(username=username).first()
-            # Tumia passlib verify
             if user and sha256_crypt.verify(password, user.password):
                 login_user(user)
                 return redirect(url_for('admin_dashboard'))
             else:
                 flash('Jina au Password sio sahihi', 'danger')
         except:
-            flash('Database haipo tayari, tafadhali subiri...', 'danger')
-            
+            flash('DB Error', 'danger')
     return render_template('login.html')
 
 @app.route("/admin")
@@ -153,7 +151,9 @@ def add_post():
         new_post = Post(title=title, content=content, image_file=image_filename, is_carousel=is_carousel)
         db.session.add(new_post)
         db.session.commit()
+        flash('Post imehifadhiwa!', 'success')
         return redirect(url_for('admin_dashboard'))
+    # Inatafuta templates/add_post.html
     return render_template('add_post.html')
 
 @app.route('/admin/add_book', methods=['GET', 'POST'])
@@ -176,7 +176,9 @@ def add_book():
             new_book = Book(title=title, author=author, description=description, category=category, file_path=filename)
             db.session.add(new_book)
             db.session.commit()
+            flash('Kitabu kimepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
+    # Inatafuta templates/add_book.html
     return render_template('add_book.html')
 
 @app.route('/admin/edit_about', methods=['GET', 'POST'])
@@ -202,7 +204,9 @@ def edit_about():
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
             about_info.founder_image = image_filename
         db.session.commit()
+        flash('Taarifa zimebadilishwa!', 'success')
         return redirect(url_for('admin_dashboard'))
+    # Inatafuta templates/edit_about.html
     return render_template('edit_about.html', about_info=about_info)
 
 @app.route('/admin_logout')
@@ -211,7 +215,7 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- AUTO-CREATE DATABASE ---
+# --- AUTO-DB ---
 with app.app_context():
     try:
         db.create_all()
@@ -223,8 +227,8 @@ with app.app_context():
         if not About.query.first():
             db.session.add(About())
             db.session.commit()
-    except Exception as e:
-        print(f"DB Error: {e}")
+    except:
+        pass
 
 if __name__ == '__main__':
     app.run(debug=True)
