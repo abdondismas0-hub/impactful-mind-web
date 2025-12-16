@@ -1,89 +1,36 @@
-<!DOCTYPE html>
-<html lang="sw">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - Impactful Mind</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0d1117; }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-        .text-shadow {
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-        }
-    </style>
-</head>
-<body>
-    <!-- JINJA: Including the Navbar -->
-    {% include 'public/nav_bar.html' %}
+{% extends "base.html" %}
 
-    <div class="container mx-auto p-4 md:p-8 min-h-screen">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-8 text-shadow text-center">Maktaba Kuu ya Impactful Mind</h1>
-        <p class="text-lg text-gray-300 mb-10 text-center">Gundua vitabu, ripoti, na nyaraka zinazoongoza katika masuala ya akili na maendeleo binafsi.</p>
-
-        {% with messages = get_flashed_messages(with_categories=True) %}
-            {% if messages %}
-                <div class="mb-6">
-                    {% for category, message in messages %}
-                        <div class="p-3 rounded-lg text-white mb-2 shadow-md 
-                        {% if category == 'success' %} bg-green-600 
-                        {% elif category == 'danger' %} bg-red-600 
-                        {% else %} bg-blue-600 
-                        {% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-        
-        <!-- === Orodha ya Vitabu (Books List) === -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            
-            {% if books %}
-                {% for book in books %}
-                <div class="glass-card rounded-xl p-6 transition duration-300 hover:scale-[1.02] transform flex flex-col justify-between">
-                    <div>
-                        <span class="text-xs font-semibold uppercase tracking-wider text-purple-400 bg-purple-900/50 px-3 py-1 rounded-full mb-2 inline-block">{{ book.category }}</span>
-                        <h2 class="text-2xl font-bold text-white mb-2">{{ book.title }}</h2>
-                        <p class="text-sm text-gray-400 mb-4 italic">Mwandishi: {{ book.author or 'Haijulikani' }}</p>
-                        
-                        <!-- Maelezo mafupi ya kitabu -->
-                        <p class="text-gray-300 mb-4 text-sm line-clamp-3">
-                            {{ book.description or 'Hakuna maelezo yanayopatikana kwa kitabu hiki.' }}
-                        </p>
-                    </div>
-                    
-                    <!-- Kitufe cha Download -->
-                    <div class="mt-4">
-                        <a href="{{ url_for('download_book', filename=book.file_path) }}" 
-                           class="w-full inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 shadow-md transform hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                            <!-- SVG Icon for Download -->
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 mr-2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3" />
-                            </svg>
-                            Pakua PDF
-                        </a>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <!-- Ujumbe kama hakuna vitabu -->
-                <div class="lg:col-span-3 text-center p-12 glass-card rounded-xl">
-                    <p class="text-xl text-yellow-400 font-semibold">Bado Hakuna Vitabu</p>
-                    <p class="text-gray-400 mt-2">Admin anapaswa kuongeza kitabu kipya kwenye maktaba kupitia Admin Dashboard.</p>
-                </div>
-            {% endif %}
-
-        </div>
+{% block content %}
+<div style="padding-top: 20px;">
+    <div class="glass-panel" style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: var(--accent); font-size: 2.5rem;">Maktaba ya Vitabu</h1>
+        <p style="color: #ccc;">Pakua na soma vitabu vilivyoteuliwa kwa ajili yako.</p>
     </div>
-</body>
-</html>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+        {% for book in books %}
+        <div class="glass-panel" style="transition: transform 0.3s;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                <div style="width: 50px; height: 70px; background: #34495e; display: flex; align-items: center; justify-content: center; border-radius: 5px;">
+                    <i class="fas fa-book fa-2x" style="color: #fff;"></i>
+                </div>
+                <span style="background: rgba(241, 196, 15, 0.2); color: var(--accent); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem;">{{ book.category }}</span>
+            </div>
+            
+            <h3 style="color: #fff; margin-bottom: 5px;">{{ book.title }}</h3>
+            <p style="color: #aaa; font-size: 0.9rem; margin-bottom: 15px;">By {{ book.author }}</p>
+            <p style="color: #ddd; font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px;">{{ book.description[:100] }}...</p>
+            
+            <a href="{{ url_for('download_book', filename=book.file_path) }}" class="btn" style="width: 100%; text-align: center; background-color: #3498db;">
+                <i class="fas fa-download"></i> Pakua PDF
+            </a>
+        </div>
+        {% else %}
+        <div class="glass-panel" style="grid-column: 1 / -1; text-align: center;">
+            <p>Hakuna vitabu vilivyopakiwa bado.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
 
