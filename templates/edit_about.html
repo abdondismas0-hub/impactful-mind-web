@@ -2,21 +2,33 @@
 
 {% block content %}
 <div class="glass-panel" style="max-width: 800px; margin: 50px auto;">
-    <h2 style="text-align: center; color: var(--accent);">Hariri Founder Info</h2>
+    <h2 style="text-align: center; color: var(--accent);">Hariri Taarifa za Shirika</h2>
     
     <form method="POST" enctype="multipart/form-data">
+        
+        <!-- Founder Details -->
+        <h3 style="color: #3498db; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Founder</h3>
         <label style="display: block; margin: 10px 0;">Jina la Founder:</label>
         <input type="text" name="founder_name" value="{{ about_info.founder_name }}" required>
         
-        <label style="display: block; margin: 10px 0;">Picha ya Founder (Square):</label>
+        <label style="display: block; margin: 10px 0;">Picha (Square):</label>
         <input type="file" name="founder_image" style="padding: 10px;">
-        <p style="font-size: 0.8rem; color: #888;">Pakia picha yenye umbo la mraba kwa matokeo bora.</p>
         
-        <label style="display: block; margin: 10px 0;">Maelezo (Bio):</label>
-        <textarea name="founder_bio" rows="10" required>{{ about_info.founder_bio }}</textarea>
+        <label style="display: block; margin: 10px 0;">Bio / Maelezo:</label>
+        <textarea name="founder_bio" rows="6" required>{{ about_info.founder_bio }}</textarea>
+
+        <!-- Mission & Vision -->
+        <h3 style="color: #2ecc71; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-top: 30px;">Mission & Vision</h3>
         
-        <button type="submit" class="btn" style="width: 100%; margin-top: 20px; background-color: #e67e22;">Hifadhi Mabadiliko</button>
+        <label style="display: block; margin: 10px 0;">Mission (Dhamira):</label>
+        <textarea name="mission" rows="4" required>{{ about_info.mission }}</textarea>
+
+        <label style="display: block; margin: 10px 0;">Vision (Maono):</label>
+        <textarea name="vision" rows="4" required>{{ about_info.vision }}</textarea>
+        
+        <button type="submit" class="btn" style="width: 100%; margin-top: 30px; background-color: #e67e22;">Hifadhi Mabadiliko</button>
     </form>
 </div>
 {% endblock %}
+
 
