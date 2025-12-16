@@ -1,71 +1,53 @@
-{% extends "public/base.html" %}
+{% extends "base.html" %}
 
 {% block content %}
-<div class="glass-panel" style="max-width: 900px; margin: 50px auto; text-align: center;">
-    <h2 style="color: var(--accent-color); font-size: 2.5rem; margin-bottom: 10px;">Wasiliana Nasi</h2>
-    <p style="color: #aaa; margin-bottom: 40px;">Tupate kupitia nji za mitandao ya kijamii au barua pepe!</p>
-    
+<div style="padding-top: 30px;">
+    <div class="glass-panel" style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: var(--accent); font-size: 2.5rem;">Wasiliana Nasi</h1>
+        <p style="color: #ccc;">Tupo tayari kukuhudumia popote ulipo.</p>
+    </div>
+
     <!-- Social Media Grid -->
-    <div class="social-grid">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: center; margin-bottom: 50px;">
         
-        <!-- WhatsApp -->
-        <a href="https://wa.me/255700000000" target="_blank" class="social-item whatsapp">
-            <i class="fab fa-whatsapp"></i>
-            <p style="font-weight: bold;">WhatsApp</p>
-            <span style="font-size: 0.8rem;">+255 700 000 000</span>
-        </a>
-        
-        <!-- Facebook -->
-        <a href="https://facebook.com/impactfulmind" target="_blank" class="social-item facebook">
-            <i class="fab fa-facebook-f"></i>
-            <p style="font-weight: bold;">Facebook</p>
-            <span style="font-size: 0.8rem;">/ImpactfulMind</span>
+        <a href="https://wa.me/255xxxxxxxxx" target="_blank" class="glass-panel" style="text-decoration: none; transition: 0.3s; padding: 30px 10px;">
+            <i class="fab fa-whatsapp fa-3x" style="color: #25d366;"></i>
+            <h4 style="color: white; margin-top: 10px;">WhatsApp</h4>
         </a>
 
-        <!-- Instagram -->
-        <a href="https://instagram.com/impactfulmind" target="_blank" class="social-item instagram">
-            <i class="fab fa-instagram"></i>
-            <p style="font-weight: bold;">Instagram</p>
-            <span style="font-size: 0.8rem;">@ImpactfulMind</span>
+        <a href="https://facebook.com" target="_blank" class="glass-panel" style="text-decoration: none; transition: 0.3s; padding: 30px 10px;">
+            <i class="fab fa-facebook fa-3x" style="color: #3b5998;"></i>
+            <h4 style="color: white; margin-top: 10px;">Facebook</h4>
         </a>
-        
-        <!-- Twitter/X -->
-        <a href="https://twitter.com/impactfulmind" target="_blank" class="social-item twitter">
-            <i class="fab fa-twitter"></i>
-            <p style="font-weight: bold;">Twitter (X)</p>
-            <span style="font-size: 0.8rem;">@ImpactfulMind</span>
+
+        <a href="https://instagram.com" target="_blank" class="glass-panel" style="text-decoration: none; transition: 0.3s; padding: 30px 10px;">
+            <i class="fab fa-instagram fa-3x" style="color: #e1306c;"></i>
+            <h4 style="color: white; margin-top: 10px;">Instagram</h4>
         </a>
-        
-        <!-- Email -->
-        <a href="mailto:info@impactfulmind.com" class="social-item email">
-            <i class="fas fa-envelope"></i>
-            <p style="font-weight: bold;">Barua Pepe</p>
-            <span style="font-size: 0.8rem;">info@impactfulmind.com</span>
+
+        <a href="https://t.me/username" target="_blank" class="glass-panel" style="text-decoration: none; transition: 0.3s; padding: 30px 10px;">
+            <i class="fab fa-telegram fa-3x" style="color: #0088cc;"></i>
+            <h4 style="color: white; margin-top: 10px;">Telegram</h4>
         </a>
-        
+
+        <a href="https://twitter.com" target="_blank" class="glass-panel" style="text-decoration: none; transition: 0.3s; padding: 30px 10px;">
+            <i class="fab fa-twitter fa-3x" style="color: #1da1f2;"></i>
+            <h4 style="color: white; margin-top: 10px;">X (Twitter)</h4>
+        </a>
+
     </div>
-    
-    <!-- Simple Contact Form (Placeholder) -->
-    <div class="glass-panel" style="margin-top: 50px; text-align: left;">
-        <h3 style="color: #3498db; margin-bottom: 20px;">Tuma Ujumbe Moja kwa Moja</h3>
-        <form action="#" method="POST" class="space-y-4">
-            <div>
-                <label for="name" style="display: block; margin-bottom: 5px;">Jina Kamili:</label>
-                <input type="text" id="name" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.1);">
-            </div>
-            <div>
-                <label for="email" style="display: block; margin-bottom: 5px;">Barua Pepe:</label>
-                <input type="email" id="email" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.1);">
-            </div>
-            <div>
-                <label for="message" style="display: block; margin-bottom: 5px;">Ujumbe:</label>
-                <textarea id="message" rows="5" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.1);"></textarea>
-            </div>
-            <button type="submit" class="btn" style="width: 100%; background-color: #2ecc71;">Tuma Ujumbe</button>
-            <p style="font-size: 0.7rem; color: #888; text-align: center;">(Hii ni fomu ya mfano tu, haijatumika kwa backend)</p>
+
+    <!-- Contact Form (Demo) -->
+    <div class="glass-panel" style="max-width: 600px; margin: auto;">
+        <h3 style="color: var(--accent); margin-bottom: 20px;">Tuma Ujumbe Haraka</h3>
+        <form>
+            <input type="text" placeholder="Jina Lako" required>
+            <input type="email" placeholder="Barua Pepe" required>
+            <textarea placeholder="Ujumbe Wako" rows="5" style="width: 100%; padding: 15px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; margin-bottom: 15px;"></textarea>
+            <button class="btn" style="width: 100%;">Tuma Ujumbe</button>
         </form>
     </div>
-
 </div>
 {% endblock %}
+
 
