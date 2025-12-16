@@ -1,40 +1,34 @@
-{% extends "public/base.html" %}
+{% extends "base.html" %}
 
 {% block content %}
-    <div style="padding-top: 50px;">
-        <h1 style="text-align: center; margin-bottom: 40px;">Daily Posts <span style="color: var(--accent-color);">Updates</span></h1>
-        
-        <div style="display: flex; flex-wrap: wrap; gap: 30px; justify-content: center;">
-            {% for post in posts %}
-            <div class="glass-panel" style="flex: 1 1 350px; padding: 0; overflow: hidden; max-width: 400px;">
-                
-                <!-- Display Image if available -->
-                {% if post.image_file %}
-                <div style="width: 100%; height: 200px; overflow: hidden;">
-                    <img src="{{ url_for('download_book', filename=post.image_file) }}" alt="Post Image" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
-                {% endif %}
-                
-                <div style="padding: 20px;">
-                    <h3 style="margin-top: 0;">{{ post.title }}</h3>
-                    <p style="color: #ccc; font-size: 0.9rem;">
-                        <i class="fas fa-calendar-alt"></i> {{ post.date_posted.strftime('%d %b %Y') }}
-                    </p>
-                    <p style="color: #eee; line-height: 1.6;">
-                        {{ post.content[:100] }}...
-                    </p>
-                    <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn" style="padding: 8px 20px; font-size: 0.9rem;">Soma Zaidi</a>
-                </div>
-            </div>
-            {% else %}
-            <div class="glass-panel" style="text-align: center;">
-                <p>Hakuna posts bado.</p>
-            </div>
-            {% endfor %}
-        </div>
+<div style="padding-top: 20px;">
+    <div class="glass-panel" style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: var(--accent); font-size: 2.5rem;">Daily Posts</h1>
+        <p style="color: #ccc;">Pata maarifa mapya kila siku.</p>
     </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
+        {% for post in posts %}
+        <div class="glass-panel" style="padding: 0; overflow: hidden;">
+            {% if post.image_file %}
+            <div style="height: 200px; background-image: url('{{ url_for('download_book', filename=post.image_file) }}'); background-size: cover; background-position: center;"></div>
+            {% else %}
+            <div style="height: 200px; background: linear-gradient(135deg, #2c3e50, #4ca1af);"></div>
+            {% endif %}
+            
+            <div style="padding: 25px;">
+                <small style="color: var(--accent);"><i class="far fa-calendar-alt"></i> {{ post.date_posted.strftime('%d %B %Y') }}</small>
+                <h3 style="color: #fff; margin: 10px 0;">{{ post.title }}</h3>
+                <p style="color: #ccc; line-height: 1.6; margin-bottom: 20px;">{{ post.content[:150] }}...</p>
+                <a href="{{ url_for('view_post', post_id=post.id) }}" style="color: #3498db; text-decoration: none; font-weight: bold;">Soma Zaidi &rarr;</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="glass-panel" style="grid-column: 1 / -1; text-align: center;">
+            <p>Hakuna machapisho bado.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}
-
-
-
 
