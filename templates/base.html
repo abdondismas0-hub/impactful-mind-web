@@ -25,20 +25,31 @@
     </nav>
 
     <div class="main-content">
-        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% with messages = get_flashed_messages() %}
             {% if messages %}
-                {% for category, message in messages %}
-                    <div style="padding: 15px; margin-bottom: 20px; border-radius: 8px; background: {{ '#2ecc71' if category=='success' else '#e74c3c' }}; color: white;">
-                        {{ message }}
-                    </div>
+                {% for message in messages %}
+                    <div style="background: rgba(46, 204, 113, 0.2); border: 1px solid #2ecc71; padding: 10px; margin-bottom: 20px; border-radius: 5px;">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
         
         {% block content %}{% endblock %}
         
-        <footer style="text-align: center; padding: 40px; color: #888; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 50px;">
-            <p>&copy; 2025 Impactful Mind. All Rights Reserved.</p>
+        <!-- FOOTER DYNAMIC -->
+        <footer class="site-footer">
+            <div class="glass-panel" style="margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 30px; text-align: left;">
+                <div style="flex: 1 1 300px;">
+                    <h4 style="color: var(--accent);">Mission</h4>
+                    <p style="font-size: 0.9rem; color: #ccc;">{{ about_info.mission if about_info else 'Mission yetu itaonekana hapa.' }}</p>
+                </div>
+                <div style="flex: 1 1 300px;">
+                    <h4 style="color: var(--accent);">Vision</h4>
+                    <p style="font-size: 0.9rem; color: #ccc;">{{ about_info.vision if about_info else 'Vision yetu itaonekana hapa.' }}</p>
+                </div>
+                <div style="flex: 1 1 100%; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-top: 10px;">
+                    <p>&copy; 2025 Impactful Mind.</p>
+                </div>
+            </div>
         </footer>
     </div>
 
