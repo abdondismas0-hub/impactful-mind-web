@@ -7,12 +7,26 @@ from passlib.hash import sha256_crypt
 
 # --- CONFIGURATION ---
 app = Flask(__name__)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'database.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
+
+# AKILI MPYA YA DATABASE (Hybrid Logic)
+# 1. Tunaangalia kama tuko Render (kwa kutafuta 'DATABASE_URL')
+database_url = os.environ.get('DATABASE_URL')
+
+if database_url:
+    # Tuko Render: Tunatumia PostgreSQL (Data hazitapotea)
+    # Render inatoa 'postgres://' lakini SQLAlchemy inataka 'postgresql://'
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    # Tuko Pydroid/Local: Tunatumia SQLite (database.db) kama zamani
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DB_PATH = os.path.join(BASE_DIR, 'database.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'impactful_pro_key_2025' 
-app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static/uploads')
+app.config['SECRET_KEY'] = 'impactful_mind_secret_key_2025' 
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -23,9 +37,7 @@ login_manager.login_message_category = 'info'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- CONTEXT PROCESSOR (HII NDIO SIRI YA KUZUIA 500 ERROR) ---
-# Hii inahakikisha 'about_info' inapatikana kwenye KILA ukurasa (Footer, Navbar, n.k.)
-# bila kuiandika kwenye kila route.
+# --- CONTEXT PROCESSOR (Kuzuia Error 500 kwenye Footer) ---
 @app.context_processor
 def inject_global_vars():
     try:
@@ -61,11 +73,11 @@ class Book(db.Model):
 class About(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     founder_name = db.Column(db.String(100), nullable=False, default="Jina la Founder")
-    founder_bio = db.Column(db.Text, nullable=False, default="Maelezo ya Founder...")
+    founder_bio = db.Column(db.Text, nullable=False, default="Maelezo...")
     founder_image = db.Column(db.String(200), nullable=True)
-    # TUMEONGEZA HIZI:
-    mission = db.Column(db.Text, nullable=False, default="Kujenga kizazi chenye fikra chanya.")
-    vision = db.Column(db.Text, nullable=False, default="Kuwa maktaba bora ya kidijitali.")
+    # Sehemu za Mission na Vision
+    mission = db.Column(db.Text, nullable=True, default="Mission yetu...")
+    vision = db.Column(db.Text, nullable=True, default="Vision yetu...")
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
 # --- ROUTES ---
@@ -81,11 +93,7 @@ def home():
         latest_posts = []
         latest_books = []
         
-    return render_template('index.html', 
-                           title='Nyumbani', 
-                           carousel_posts=carousel_posts,
-                           posts=latest_posts, 
-                           books=latest_books)
+    return render_template('index.html', title='Nyumbani', carousel_posts=carousel_posts, posts=latest_posts, books=latest_books)
 
 @app.route("/library")
 def library():
@@ -105,12 +113,10 @@ def posts():
 
 @app.route("/contact")
 def contact():
-    # Hili faili lilikuwa halipo, sasa tutaliunda
     return render_template('contact.html', title='Wasiliana Nasi')
 
 @app.route('/post/<int:post_id>')
 def view_post(post_id):
-    # Hili faili lilikuwa halipo, sasa tutaliunda
     post = Post.query.get_or_404(post_id)
     return render_template('view_post.html', title=post.title, post=post)
 
@@ -133,7 +139,7 @@ def admin_login():
             else:
                 flash('Login imeshindikana', 'danger')
         except:
-            flash('DB Error', 'danger')
+            flash('DB Error: Subiri kidogo na jaribu tena', 'danger')
     return render_template('login.html')
 
 @app.route("/admin")
@@ -207,7 +213,6 @@ def edit_about():
     if request.method == 'POST':
         about_info.founder_name = request.form.get('founder_name')
         about_info.founder_bio = request.form.get('founder_bio')
-        # HAPA: Tunahifadhi Mission na Vision pia
         about_info.mission = request.form.get('mission')
         about_info.vision = request.form.get('vision')
         
@@ -219,7 +224,6 @@ def edit_about():
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
             about_info.founder_image = image_filename
         db.session.commit()
-        flash('Taarifa zimesasishwa!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('edit_about.html', about_info=about_info)
 
@@ -229,7 +233,7 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- AUTO-CREATE DATABASE ---
+# --- DB INIT (Inajenga Database kiotomatiki popote ilipo) ---
 with app.app_context():
     try:
         db.create_all()
@@ -241,8 +245,8 @@ with app.app_context():
         if not About.query.first():
             db.session.add(About())
             db.session.commit()
-    except:
-        pass
+    except Exception as e:
+        print(f"DB Init Error: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)
