@@ -1,21 +1,20 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="glass-panel" style="max-width: 600px; margin: 50px auto;">
-    <h2 style="text-align: center; color: var(--accent);">Pakia Video Mpya</h2>
-    
+<div class="glass-panel" style="max-width: 600px; margin: auto; padding: 40px; background: rgba(255,255,255,0.05); border-radius: 15px;">
+    <h2 style="color: #f1c40f; text-align: center;">Pakia Video</h2>
     <form method="POST" enctype="multipart/form-data">
-        <label style="display: block; margin: 10px 0;">Kichwa cha Video:</label>
-        <input type="text" name="title" required>
+        <label style="display: block; margin: 10px 0;">Kichwa:</label>
+        <input type="text" name="title" required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #555; color: white; border-radius: 5px;">
         
-        <label style="display: block; margin: 10px 0;">Faili la Video (MP4):</label>
-        <input type="file" name="video_file" accept="video/mp4,video/x-m4v,video/*" required style="padding: 10px; background: rgba(255,255,255,0.1);">
+        <label style="display: block; margin: 10px 0;">Video (MP4):</label>
+        <input type="file" name="video_file" accept="video/*" required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #555; color: white; border-radius: 5px;">
         
-        <label style="display: block; margin: 10px 0;">Maelezo Mafupi:</label>
-        <textarea name="description" rows="3"></textarea>
+        <label style="display: block; margin: 10px 0;">Maelezo:</label>
+        <textarea name="description" rows="3" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #555; color: white; border-radius: 5px;"></textarea>
         
-        <button type="submit" class="btn" style="width: 100%; margin-top: 20px; background-color: #9b59b6;">Pakia Video</button>
+        <button class="btn" style="width: 100%; margin-top: 20px; background: #9b59b6; color: white; padding: 10px; border: none; border-radius: 5px;">Pakia</button>
     </form>
 </div>
 {% endblock %}
+
 
