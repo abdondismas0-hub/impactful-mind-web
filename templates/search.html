@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding-top: 30px;">
+    <h2 style="color: var(--accent); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Matokeo ya Utafutaji: "{{ query }}"</h2>
+    
+    {% if not posts and not books %}
+        <div class="glass-panel" style="text-align: center; margin-top: 30px;">
+            <p>Hakuna matokeo yaliyopatikana.</p>
+        </div>
+    {% endif %}
+
+    <!-- Posts Results -->
+    {% if posts %}
+    <h3 style="margin-top: 30px; color: #3498db;">Posts</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        {% for post in posts %}
+        <div class="glass-panel" style="padding: 20px;">
+            <h4><a href="{{ url_for('view_post', post_id=post.id) }}" style="color: white;">{{ post.title }}</a></h4>
+            <p style="color: #aaa; font-size: 0.9rem;">{{ post.content[:100] }}...</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Books Results -->
+    {% if books %}
+    <h3 style="margin-top: 30px; color: #2ecc71;">Vitabu</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        {% for book in books %}
+        <div class="glass-panel" style="padding: 20px;">
+            <h4>{{ book.title }}</h4>
+            <p style="color: #aaa;">{{ book.author }}</p>
+            <a href="{{ url_for('download_book', filename=book.file_path) }}" class="btn" style="padding: 5px 15px; font-size: 0.8rem;">Pakua</a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
