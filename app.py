@@ -4,15 +4,14 @@ from flask import Flask, render_template, url_for, flash, redirect, request, sen
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user, login_required
 from passlib.hash import sha256_crypt 
-# Import Cloudinary
+from sqlalchemy import or_ # Kwa ajili ya Search
 import cloudinary
 import cloudinary.uploader
-import cloudinary.api
 
 # --- CONFIGURATION ---
 app = Flask(__name__)
 
-# 1. Database Logic (PostgreSQL vs SQLite)
+# 1. Database (PostgreSQL kwa Render, SQLite kwa Local)
 database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
@@ -23,46 +22,40 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'impactful_mind_pro_key_2025' 
+app.config['SECRET_KEY'] = 'impactful_mind_master_key_2025' 
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'admin_login'
-login_manager.login_message_category = 'info'
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- HELPER FUNCTION: UPLOAD (Hii ndiyo inayofanya kazi ya Cloudinary) ---
+# --- HELPER: UPLOAD TO CLOUDINARY ---
 def save_file(file_storage):
-    """
-    Inaangalia kama tuko Render (Cloudinary) au Local.
-    Inarudisha jina la faili au URL kamili ya Cloudinary.
-    """
+    """ Hifadhi faili Cloudinary ili lisifutike Render ikirestart """
     if not file_storage or file_storage.filename == '':
         return None
-
-    # Angalia kama Cloudinary ipo (Render)
+    
+    # Kama CLOUDINARY_URL ipo (Render), tumia hiyo
     if os.environ.get('CLOUDINARY_URL'):
         try:
-            # Upload kwenda Cloudinary (Inatambua picha, video, pdf auto)
             upload_result = cloudinary.uploader.upload(file_storage, resource_type="auto")
-            return upload_result['secure_url'] # Tunapata link ya kudumu (https://...)
+            return upload_result['secure_url']
         except Exception as e:
             print(f"Cloudinary Error: {e}")
             return None
     else:
-        # Tuko Local (Pydroid) - Hifadhi kwenye folda
+        # Local Backup
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.makedirs(app.config['UPLOAD_FOLDER'])
-        filename = "Local_" + datetime.now().strftime("%Y%m%d%H%M%S") + "_" + file_storage.filename
+        filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + file_storage.filename
         file_storage.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return filename
 
 # --- MODELS ---
-# Tumeongeza urefu wa Columns ili zitoshee Link ndefu za Cloudinary
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
@@ -74,7 +67,7 @@ class Post(db.Model):
     title = db.Column(db.String(150), nullable=False)
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    image_file = db.Column(db.String(500), nullable=True) # 500 chars for URL
+    image_file = db.Column(db.String(500), nullable=True) 
     is_carousel = db.Column(db.Boolean, default=False)
 
 class Book(db.Model):
@@ -83,14 +76,21 @@ class Book(db.Model):
     author = db.Column(db.String(100), nullable=True)
     description = db.Column(db.Text, nullable=True)
     category = db.Column(db.String(50), nullable=True)
-    file_path = db.Column(db.String(500), nullable=False) # 500 chars for URL
+    file_path = db.Column(db.String(500), nullable=False)
+    date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+class Video(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    video_file = db.Column(db.String(500), nullable=False)
     date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 class About(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     founder_name = db.Column(db.String(100), nullable=False, default="Jina la Founder")
     founder_bio = db.Column(db.Text, nullable=False, default="Maelezo...")
-    founder_image = db.Column(db.String(500), nullable=True) # 500 chars for URL
+    founder_image = db.Column(db.String(500), nullable=True)
     mission = db.Column(db.Text, nullable=True)
     vision = db.Column(db.Text, nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
@@ -112,14 +112,28 @@ def home():
         carousel_posts = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
         latest_posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
         latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
-        about_info = About.query.first()
+        videos = Video.query.order_by(Video.date_uploaded.desc()).limit(2).all()
     except:
         carousel_posts = []
         latest_posts = []
         latest_books = []
-        about_info = None
-        
-    return render_template('index.html', title='Nyumbani', carousel_posts=carousel_posts, posts=latest_posts, books=latest_books, about_info=about_info)
+        videos = []
+    
+    return render_template('index.html', title='Nyumbani', 
+                           carousel_posts=carousel_posts, posts=latest_posts, 
+                           books=latest_books, videos=videos)
+
+# SEARCH ROUTE (MPYA)
+@app.route("/search")
+def search():
+    query = request.args.get('q')
+    if query:
+        posts = Post.query.filter(or_(Post.title.ilike(f'%{query}%'), Post.content.ilike(f'%{query}%'))).all()
+        books = Book.query.filter(or_(Book.title.ilike(f'%{query}%'), Book.author.ilike(f'%{query}%'))).all()
+    else:
+        posts = []
+        books = []
+    return render_template('search.html', title='Matokeo', posts=posts, books=books, query=query)
 
 @app.route("/library")
 def library():
@@ -146,14 +160,11 @@ def view_post(post_id):
     post = Post.query.get_or_404(post_id)
     return render_template('view_post.html', title=post.title, post=post)
 
-# --- ROUTE MUHIMU: DOWNLOAD/DISPLAY ---
 @app.route('/download/<path:filename>')
 def download_book(filename):
-    # Kama ni URL ya Cloudinary (inaanza na http), elekeza huko
+    # Kama ni URL (Cloudinary), elekeza huko
     if filename and (filename.startswith('http://') or filename.startswith('https://')):
         return redirect(filename)
-    
-    # Kama ni faili la local (Pydroid)
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # --- ADMIN ROUTES ---
@@ -180,10 +191,12 @@ def admin_dashboard():
     try:
         total_books = Book.query.count()
         total_posts = Post.query.count()
+        total_videos = Video.query.count()
     except:
         total_books = 0
         total_posts = 0
-    return render_template('dashboard.html', total_books=total_books, total_posts=total_posts)
+        total_videos = 0
+    return render_template('dashboard.html', total_books=total_books, total_posts=total_posts, total_videos=total_videos)
 
 @app.route('/admin/add_post', methods=['GET', 'POST'])
 @login_required
@@ -193,14 +206,11 @@ def add_post():
         content = request.form.get('content')
         is_carousel = request.form.get('is_carousel') == 'on'
         
-        image = request.files.get('image_file')
-        # TUMA CLOUDINARY
-        image_url = save_file(image)
+        image_url = save_file(request.files.get('image_file'))
         
         new_post = Post(title=title, content=content, image_file=image_url, is_carousel=is_carousel)
         db.session.add(new_post)
         db.session.commit()
-        flash('Post imeongezwa na picha imehifadhiwa!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('add_post.html')
 
@@ -212,20 +222,31 @@ def add_book():
         author = request.form.get('author')
         description = request.form.get('description')
         category = request.form.get('category')
-        file = request.files.get('pdf_file')
         
-        # TUMA CLOUDINARY (PDF)
-        file_url = save_file(file)
-
+        file_url = save_file(request.files.get('pdf_file'))
+        
         if file_url:
             new_book = Book(title=title, author=author, description=description, category=category, file_path=file_url)
             db.session.add(new_book)
             db.session.commit()
-            flash('Kitabu kimepakiwa Cloud!', 'success')
             return redirect(url_for('admin_dashboard'))
-        else:
-            flash('Kosa: Tafadhali chagua faili.', 'danger')
     return render_template('add_book.html')
+
+# MPYA: Video Upload
+@app.route('/admin/add_video', methods=['GET', 'POST'])
+@login_required
+def add_video():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        file_url = save_file(request.files.get('video_file'))
+        
+        if file_url:
+            new_video = Video(title=title, description=description, video_file=file_url)
+            db.session.add(new_video)
+            db.session.commit()
+            return redirect(url_for('admin_dashboard'))
+    return render_template('add_video.html')
 
 @app.route('/admin/edit_about', methods=['GET', 'POST'])
 @login_required
@@ -245,17 +266,22 @@ def edit_about():
         about_info.mission = request.form.get('mission')
         about_info.vision = request.form.get('vision')
         
-        image = request.files.get('founder_image')
-        # TUMA CLOUDINARY
-        new_image_url = save_file(image)
-        
-        if new_image_url:
-            about_info.founder_image = new_image_url
+        new_image = save_file(request.files.get('founder_image'))
+        if new_image:
+            about_info.founder_image = new_image
             
         db.session.commit()
-        flash('Taarifa zimebadilishwa na picha imehifadhiwa!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('edit_about.html', about_info=about_info)
+
+@app.route('/admin/delete_post/<int:id>')
+@login_required
+def delete_post(id):
+    post = Post.query.get_or_404(id)
+    db.session.delete(post)
+    db.session.commit()
+    flash('Post imefutwa', 'success')
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin_logout')
 @login_required
