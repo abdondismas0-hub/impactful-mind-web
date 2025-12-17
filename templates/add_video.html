@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-panel" style="max-width: 600px; margin: 50px auto;">
+    <h2 style="text-align: center; color: var(--accent);">Pakia Video Mpya</h2>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <label style="display: block; margin: 10px 0;">Kichwa cha Video:</label>
+        <input type="text" name="title" required>
+        
+        <label style="display: block; margin: 10px 0;">Faili la Video (MP4):</label>
+        <input type="file" name="video_file" accept="video/mp4,video/x-m4v,video/*" required style="padding: 10px; background: rgba(255,255,255,0.1);">
+        
+        <label style="display: block; margin: 10px 0;">Maelezo Mafupi:</label>
+        <textarea name="description" rows="3"></textarea>
+        
+        <button type="submit" class="btn" style="width: 100%; margin-top: 20px; background-color: #9b59b6;">Pakia Video</button>
+    </form>
+</div>
+{% endblock %}
+
