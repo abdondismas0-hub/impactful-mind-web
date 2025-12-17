@@ -4,29 +4,24 @@ from flask import Flask, render_template, url_for, flash, redirect, request, sen
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user, login_required
 from passlib.hash import sha256_crypt 
+from sqlalchemy import or_ # Kwa ajili ya Search logic
 
 # --- CONFIGURATION ---
 app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'database.db')
 
-# AKILI MPYA YA DATABASE (Hybrid Logic)
-# 1. Tunaangalia kama tuko Render (kwa kutafuta 'DATABASE_URL')
+# Logic ya Database (Render vs Local)
 database_url = os.environ.get('DATABASE_URL')
-
-if database_url:
-    # Tuko Render: Tunatumia PostgreSQL (Data hazitapotea)
-    # Render inatoa 'postgres://' lakini SQLAlchemy inataka 'postgresql://'
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
-    # Tuko Pydroid/Local: Tunatumia SQLite (database.db) kama zamani
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    DB_PATH = os.path.join(BASE_DIR, 'database.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'impactful_mind_secret_key_2025' 
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
+app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static/uploads')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -37,7 +32,7 @@ login_manager.login_message_category = 'info'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- CONTEXT PROCESSOR (Kuzuia Error 500 kwenye Footer) ---
+# --- CONTEXT PROCESSOR (Search Form & About Info kila mahali) ---
 @app.context_processor
 def inject_global_vars():
     try:
@@ -75,10 +70,17 @@ class About(db.Model):
     founder_name = db.Column(db.String(100), nullable=False, default="Jina la Founder")
     founder_bio = db.Column(db.Text, nullable=False, default="Maelezo...")
     founder_image = db.Column(db.String(200), nullable=True)
-    # Sehemu za Mission na Vision
-    mission = db.Column(db.Text, nullable=True, default="Mission yetu...")
-    vision = db.Column(db.Text, nullable=True, default="Vision yetu...")
+    mission = db.Column(db.Text, nullable=True)
+    vision = db.Column(db.Text, nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+
+# MPYA: Video Model
+class Video(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    video_file = db.Column(db.String(200), nullable=False)
+    date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 # --- ROUTES ---
 
@@ -88,12 +90,32 @@ def home():
         carousel_posts = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
         latest_posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
         latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
+        videos = Video.query.order_by(Video.date_uploaded.desc()).limit(2).all() # Chukua video 2 za mwisho
     except:
         carousel_posts = []
         latest_posts = []
         latest_books = []
+        videos = []
         
-    return render_template('index.html', title='Nyumbani', carousel_posts=carousel_posts, posts=latest_posts, books=latest_books)
+    return render_template('index.html', 
+                           title='Nyumbani', 
+                           carousel_posts=carousel_posts,
+                           posts=latest_posts, 
+                           books=latest_books,
+                           videos=videos)
+
+# MPYA: Search Route
+@app.route("/search")
+def search():
+    query = request.args.get('q')
+    if query:
+        # Tafuta kwenye Posts na Vitabu
+        posts = Post.query.filter(or_(Post.title.ilike(f'%{query}%'), Post.content.ilike(f'%{query}%'))).all()
+        books = Book.query.filter(or_(Book.title.ilike(f'%{query}%'), Book.author.ilike(f'%{query}%'))).all()
+    else:
+        posts = []
+        books = []
+    return render_template('search.html', title='Matokeo ya Utafutaji', posts=posts, books=books, query=query)
 
 @app.route("/library")
 def library():
@@ -139,7 +161,7 @@ def admin_login():
             else:
                 flash('Login imeshindikana', 'danger')
         except:
-            flash('DB Error: Subiri kidogo na jaribu tena', 'danger')
+            flash('DB Error', 'danger')
     return render_template('login.html')
 
 @app.route("/admin")
@@ -148,10 +170,12 @@ def admin_dashboard():
     try:
         total_books = Book.query.count()
         total_posts = Post.query.count()
+        total_videos = Video.query.count()
     except:
         total_books = 0
         total_posts = 0
-    return render_template('dashboard.html', total_books=total_books, total_posts=total_posts)
+        total_videos = 0
+    return render_template('dashboard.html', total_books=total_books, total_posts=total_posts, total_videos=total_videos)
 
 @app.route('/admin/add_post', methods=['GET', 'POST'])
 @login_required
@@ -198,6 +222,33 @@ def add_book():
             return redirect(url_for('admin_dashboard'))
     return render_template('add_book.html')
 
+# MPYA: Admin Add Video
+@app.route('/admin/add_video', methods=['GET', 'POST'])
+@login_required
+def add_video():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        file = request.files.get('video_file')
+        
+        if not os.path.exists(app.config['UPLOAD_FOLDER']):
+            os.makedirs(app.config['UPLOAD_FOLDER'])
+
+        # Tunaruhusu mp4, mkv, avi
+        if file and file.filename != '' and file.filename.rsplit('.', 1)[1].lower() in {'mp4', 'mkv', 'avi', 'mov'}:
+            filename = "Video_" + datetime.now().strftime("%Y%m%d%H%M%S") + '.mp4'
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            
+            new_video = Video(title=title, description=description, video_file=filename)
+            db.session.add(new_video)
+            db.session.commit()
+            flash('Video imepakiwa!', 'success')
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Aina ya faili haikubaliki (Tumia MP4)', 'danger')
+
+    return render_template('add_video.html')
+
 @app.route('/admin/edit_about', methods=['GET', 'POST'])
 @login_required
 def edit_about():
@@ -233,7 +284,7 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- DB INIT (Inajenga Database kiotomatiki popote ilipo) ---
+# --- DB INIT ---
 with app.app_context():
     try:
         db.create_all()
