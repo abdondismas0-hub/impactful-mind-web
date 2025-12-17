@@ -4,24 +4,24 @@ from flask import Flask, render_template, url_for, flash, redirect, request, sen
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user, login_required
 from passlib.hash import sha256_crypt 
-from sqlalchemy import or_ # Kwa ajili ya Search logic
+from sqlalchemy import or_
 
 # --- CONFIGURATION ---
 app = Flask(__name__)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'database.db')
 
-# Logic ya Database (Render vs Local)
+# Database Logic (Render vs Local)
 database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DB_PATH = os.path.join(BASE_DIR, 'database.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'impactful_mind_secret_key_2025' 
-app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static/uploads')
+app.config['SECRET_KEY'] = 'impactful_mind_master_key_2025' 
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -32,7 +32,7 @@ login_manager.login_message_category = 'info'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- CONTEXT PROCESSOR (Search Form & About Info kila mahali) ---
+# --- CONTEXT PROCESSOR ---
 @app.context_processor
 def inject_global_vars():
     try:
@@ -65,6 +65,13 @@ class Book(db.Model):
     file_path = db.Column(db.String(200), nullable=False)
     date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
+class Video(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    video_file = db.Column(db.String(200), nullable=False)
+    date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
 class About(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     founder_name = db.Column(db.String(100), nullable=False, default="Jina la Founder")
@@ -74,15 +81,7 @@ class About(db.Model):
     vision = db.Column(db.Text, nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
-# MPYA: Video Model
-class Video(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(150), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    video_file = db.Column(db.String(200), nullable=False)
-    date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-# --- ROUTES ---
+# --- PUBLIC ROUTES ---
 
 @app.route("/")
 def home():
@@ -90,32 +89,25 @@ def home():
         carousel_posts = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
         latest_posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
         latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
-        videos = Video.query.order_by(Video.date_uploaded.desc()).limit(2).all() # Chukua video 2 za mwisho
+        videos = Video.query.order_by(Video.date_uploaded.desc()).limit(2).all()
     except:
         carousel_posts = []
         latest_posts = []
         latest_books = []
         videos = []
-        
-    return render_template('index.html', 
-                           title='Nyumbani', 
-                           carousel_posts=carousel_posts,
-                           posts=latest_posts, 
-                           books=latest_books,
-                           videos=videos)
+    
+    return render_template('index.html', title='Nyumbani', carousel_posts=carousel_posts, posts=latest_posts, books=latest_books, videos=videos)
 
-# MPYA: Search Route
 @app.route("/search")
 def search():
     query = request.args.get('q')
     if query:
-        # Tafuta kwenye Posts na Vitabu
         posts = Post.query.filter(or_(Post.title.ilike(f'%{query}%'), Post.content.ilike(f'%{query}%'))).all()
         books = Book.query.filter(or_(Book.title.ilike(f'%{query}%'), Book.author.ilike(f'%{query}%'))).all()
     else:
         posts = []
         books = []
-    return render_template('search.html', title='Matokeo ya Utafutaji', posts=posts, books=books, query=query)
+    return render_template('search.html', title='Matokeo', posts=posts, books=books, query=query)
 
 @app.route("/library")
 def library():
@@ -161,22 +153,76 @@ def admin_login():
             else:
                 flash('Login imeshindikana', 'danger')
         except:
-            flash('DB Error', 'danger')
+            flash('Database Error', 'danger')
     return render_template('login.html')
 
 @app.route("/admin")
 @login_required
 def admin_dashboard():
     try:
-        total_books = Book.query.count()
-        total_posts = Post.query.count()
-        total_videos = Video.query.count()
+        # HAPA: Tunatuma orodha kamili badala ya namba tu ili tuweze kufuta
+        all_books = Book.query.order_by(Book.date_uploaded.desc()).all()
+        all_posts = Post.query.order_by(Post.date_posted.desc()).all()
+        all_videos = Video.query.order_by(Video.date_uploaded.desc()).all()
+        
+        # Takwimu
+        total_books = len(all_books)
+        total_posts = len(all_posts)
+        total_videos = len(all_videos)
     except:
+        all_books = []
+        all_posts = []
+        all_videos = []
         total_books = 0
         total_posts = 0
         total_videos = 0
-    return render_template('dashboard.html', total_books=total_books, total_posts=total_posts, total_videos=total_videos)
+        
+    return render_template('dashboard.html', 
+                           total_books=total_books, total_posts=total_posts, total_videos=total_videos,
+                           books=all_books, posts=all_posts, videos=all_videos)
 
+# --- DELETE ROUTES (MPYA) ---
+
+@app.route('/admin/delete_post/<int:post_id>', methods=['POST'])
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    # Optional: Futa picha pia (Kwenye Local/Pydroid)
+    if post.image_file and os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], post.image_file)):
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], post.image_file))
+        
+    db.session.delete(post)
+    db.session.commit()
+    flash('Post imefutwa!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_book/<int:book_id>', methods=['POST'])
+@login_required
+def delete_book(book_id):
+    book = Book.query.get_or_404(book_id)
+    # Optional: Futa PDF
+    if book.file_path and os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], book.file_path)):
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], book.file_path))
+        
+    db.session.delete(book)
+    db.session.commit()
+    flash('Kitabu kimefutwa!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_video/<int:video_id>', methods=['POST'])
+@login_required
+def delete_video(video_id):
+    video = Video.query.get_or_404(video_id)
+    # Optional: Futa Video
+    if video.video_file and os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], video.video_file)):
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], video.video_file))
+        
+    db.session.delete(video)
+    db.session.commit()
+    flash('Video imefutwa!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+# --- ADD ROUTES ---
 @app.route('/admin/add_post', methods=['GET', 'POST'])
 @login_required
 def add_post():
@@ -184,12 +230,13 @@ def add_post():
         title = request.form.get('title')
         content = request.form.get('content')
         is_carousel = request.form.get('is_carousel') == 'on'
-        
         image = request.files.get('image_file')
         image_filename = None
+        
+        if not os.path.exists(app.config['UPLOAD_FOLDER']):
+            os.makedirs(app.config['UPLOAD_FOLDER'])
+            
         if image and image.filename != '':
-            if not os.path.exists(app.config['UPLOAD_FOLDER']):
-                os.makedirs(app.config['UPLOAD_FOLDER'])
             image_filename = "Post_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
         
@@ -222,7 +269,6 @@ def add_book():
             return redirect(url_for('admin_dashboard'))
     return render_template('add_book.html')
 
-# MPYA: Admin Add Video
 @app.route('/admin/add_video', methods=['GET', 'POST'])
 @login_required
 def add_video():
@@ -234,19 +280,13 @@ def add_video():
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.makedirs(app.config['UPLOAD_FOLDER'])
 
-        # Tunaruhusu mp4, mkv, avi
-        if file and file.filename != '' and file.filename.rsplit('.', 1)[1].lower() in {'mp4', 'mkv', 'avi', 'mov'}:
+        if file and file.filename != '':
             filename = "Video_" + datetime.now().strftime("%Y%m%d%H%M%S") + '.mp4'
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            
             new_video = Video(title=title, description=description, video_file=filename)
             db.session.add(new_video)
             db.session.commit()
-            flash('Video imepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
-        else:
-            flash('Aina ya faili haikubaliki (Tumia MP4)', 'danger')
-
     return render_template('add_video.html')
 
 @app.route('/admin/edit_about', methods=['GET', 'POST'])
@@ -259,7 +299,7 @@ def edit_about():
             db.session.add(about_info)
             db.session.commit()
     except:
-        return "Database Error"
+        return "DB Error"
         
     if request.method == 'POST':
         about_info.founder_name = request.form.get('founder_name')
@@ -284,7 +324,7 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- DB INIT ---
+# --- AUTO-CREATE DATABASE ---
 with app.app_context():
     try:
         db.create_all()
@@ -297,7 +337,7 @@ with app.app_context():
             db.session.add(About())
             db.session.commit()
     except Exception as e:
-        print(f"DB Init Error: {e}")
+        print(f"DB Error: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)
