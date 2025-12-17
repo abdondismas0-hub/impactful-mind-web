@@ -3,110 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impactful Mind - {{ title }}</title>
+    <title>Impactful Mind</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <!-- Updated FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <style>
-        /* Sidebar Styles (Existing) */
-        .menu-toggle-btn {
-            position: fixed; top: 20px; left: 20px; width: 50px; height: 50px;
-            background-color: #f1c40f; color: #0c1422; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
-            z-index: 2000; cursor: pointer; border: none; transition: transform 0.3s;
-        }
-        .menu-toggle-btn:hover { transform: scale(1.1); }
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
-            .sidebar.active { transform: translateX(0); }
-            .main-content { margin-left: 0; }
-        }
-
-        /* MPYA: Search Bar Styling */
-        .search-container {
-            margin-top: 10px; margin-bottom: 30px; display: flex; justify-content: flex-end;
-        }
-        .search-form {
-            position: relative; display: flex; align-items: center;
-            background: rgba(255, 255, 255, 0.1); padding: 5px 15px;
-            border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-        }
-        .search-input {
-            background: transparent; border: none; color: white;
-            padding: 10px; outline: none; width: 200px; font-size: 1rem;
-        }
-        .search-btn {
-            background: transparent; border: none; color: #f1c40f;
-            font-size: 1.2rem; cursor: pointer; transition: 0.3s;
-        }
-        .search-btn:hover { transform: scale(1.2); }
+        .menu-toggle { position: fixed; top: 20px; left: 20px; width: 50px; height: 50px; background: #f1c40f; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 2000; cursor: pointer; color: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .sidebar { position: fixed; left: -260px; top: 0; width: 250px; height: 100%; background: rgba(12, 20, 34, 0.95); transition: 0.3s; z-index: 1500; padding-top: 80px; box-shadow: 2px 0 10px rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
+        .sidebar.active { left: 0; }
+        .nav-links { list-style: none; padding: 0; }
+        .nav-links li a { display: block; padding: 15px 20px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .nav-links li a:hover { background: rgba(241, 196, 15, 0.1); color: #f1c40f; padding-left: 25px; transition: 0.3s; }
+        .main-content { padding: 20px; margin-left: 0; transition: 0.3s; padding-top: 80px; max-width: 1200px; margin: auto; }
+        
+        /* SEARCH BAR STYLE */
+        .search-wrapper { position: absolute; top: 25px; right: 20px; z-index: 1000; }
+        .search-box { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; display: flex; align-items: center; backdrop-filter: blur(5px); }
+        .search-box input { background: transparent; border: none; color: white; outline: none; width: 150px; }
+        .search-box button { background: transparent; border: none; color: #f1c40f; cursor: pointer; }
+        
+        @media(min-width: 768px) { .main-content { margin-left: 0; } }
     </style>
 </head>
-<body>
+<body style="background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color: white; font-family: 'Poppins', sans-serif; margin: 0;">
 
-    <button class="menu-toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <div class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('active')">
+        <i class="fas fa-bars"></i>
+    </div>
 
     <nav class="sidebar" id="sidebar">
-        <div class="brand" style="margin-top: 60px;">Impactful Mind</div>
+        <h2 style="text-align: center; color: #f1c40f; font-size: 1.8rem; margin-bottom: 30px;">Impactful Mind</h2>
         <ul class="nav-links">
             <li><a href="{{ url_for('home') }}"><i class="fas fa-home"></i> Nyumbani</a></li>
             <li><a href="{{ url_for('posts') }}"><i class="fas fa-newspaper"></i> Daily Posts</a></li>
-            <li><a href="{{ url_for('library') }}"><i class="fas fa-book"></i> Library</a></li>
-            <li><a href="{{ url_for('contact') }}"><i class="fas fa-envelope"></i> Contact Us</a></li>
-            <li style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                <a href="{{ url_for('admin_login') }}" style="color: #ff6b6b;"><i class="fas fa-lock"></i> Admin Login</a>
-            </li>
+            <li><a href="{{ url_for('library') }}"><i class="fas fa-book"></i> Maktaba</a></li>
+            <li><a href="{{ url_for('contact') }}"><i class="fas fa-envelope"></i> Wasiliana</a></li>
+            <li><a href="{{ url_for('admin_login') }}"><i class="fas fa-lock"></i> Admin</a></li>
         </ul>
-        <div class="sidebar-footer">&copy; 2025 Impactful Mind</div>
     </nav>
+    
+    <!-- Search Bar -->
+    <div class="search-wrapper">
+        <form action="{{ url_for('search') }}" method="GET" class="search-box">
+            <input type="text" name="q" placeholder="Tafuta...">
+            <button type="submit"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
 
-    <div class="main-content" id="main-content">
-        
-        <!-- SEARCH BAR (Itaonekana kwenye kila page juu kulia) -->
-        <div class="search-container">
-            <form action="{{ url_for('search') }}" method="GET" class="search-form">
-                <input type="text" name="q" class="search-input" placeholder="Tafuta vitabu, posts...">
-                <button type="submit" class="search-btn"><i class="fas fa-search"></i></button>
-            </form>
-        </div>
-
+    <div class="main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div style="margin-bottom: 20px;">
                 {% for category, message in messages %}
-                    <div class="glass-panel" style="padding: 15px; border-left: 5px solid {{ '#2ecc71' if category=='success' else '#e74c3c' }}; background: rgba(0,0,0,0.3);">{{ message }}</div>
+                    <div style="padding: 15px; margin-bottom: 20px; border-radius: 8px; background: {{ 'rgba(46, 204, 113, 0.2)' if category=='success' else 'rgba(231, 76, 60, 0.2)' }}; border-left: 5px solid {{ '#2ecc71' if category=='success' else '#e74c3c' }};">
+                        {{ message }}
+                    </div>
                 {% endfor %}
-                </div>
             {% endif %}
         {% endwith %}
-
+        
         {% block content %}{% endblock %}
-
-        <footer class="site-footer">
-            <div class="glass-panel" style="margin-bottom: 0; border-radius: 0;">
-                <div class="vision-mission">
-                    <div class="vm-card">
-                        <h4><i class="fas fa-eye"></i> Our Vision</h4>
-                        <p>{{ about_info.vision if about_info and about_info.vision else 'Vision yetu itaonekana hapa.' }}</p>
-                    </div>
-                    <div class="vm-card">
-                        <h4><i class="fas fa-bullseye"></i> Our Mission</h4>
-                        <p>{{ about_info.mission if about_info and about_info.mission else 'Mission yetu itaonekana hapa.' }}</p>
-                    </div>
+        
+        <footer style="margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px;">
+            <div class="glass-panel" style="display: flex; flex-wrap: wrap; gap: 20px; text-align: left; background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                <div style="flex: 1 1 300px;">
+                    <h4 style="color: #f1c40f;">Mission</h4>
+                    <p style="font-size: 0.9rem; color: #ccc;">{{ about_info.mission if about_info else 'Mission yetu...' }}</p>
                 </div>
-                <p style="margin-top: 20px; font-size: 0.8rem; color: #888;">Designed for Impactful Mind.</p>
+                <div style="flex: 1 1 300px;">
+                    <h4 style="color: #f1c40f;">Vision</h4>
+                    <p style="font-size: 0.9rem; color: #ccc;">{{ about_info.vision if about_info else 'Vision yetu...' }}</p>
+                </div>
             </div>
+            <p style="text-align: center; color: #888; margin-top: 20px;">&copy; 2025 Impactful Mind.</p>
         </footer>
     </div>
 
-    <script>
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-        }
-    </script>
 </body>
 </html>
+
 
