@@ -1,7 +1,7 @@
-/* IMPACTFUL MIND - PREMIUM STYLE v2.0 */
+/* IMPACTFUL MIND - PREMIUM DESIGN V3 */
 :root {
     --primary-bg: #0c1422;
-    --glass-bg: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(255, 255, 255, 0.05);
     --glass-border: rgba(255, 255, 255, 0.1);
     --accent: #f1c40f; /* Gold */
     --text: #ecf0f1;
@@ -18,114 +18,95 @@ body {
     min-height: 100vh;
 }
 
-/* --- CAROUSEL / SLIDESHOW (SMART FIT) --- */
-.carousel-container {
-    height: 500px; /* Urefu mkubwa */
-    border-radius: 20px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    border: 1px solid var(--glass-border);
-    background: #000;
-}
-
-.carousel-item {
-    height: 100%;
-    width: 100%;
-    display: none; /* Controlled by JS */
-    position: relative;
-    /* Hii inatengeneza background iliyofifia (Blur) ili picha isionekane mbaya ikiwa haijai */
-    background-size: cover;
-    background-position: center;
-}
-
-/* Picha halisi ndani ya slide */
-.slide-img-contain {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; /* Hii inahakikisha picha HAIKATIKI */
-    position: relative;
-    z-index: 2;
-    backdrop-filter: blur(20px); /* Blur background */
-    background: rgba(0,0,0,0.5);
-}
-
-.carousel-caption {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 40px;
-    background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
-    color: #fff;
-    z-index: 3;
-}
-
-.carousel-caption h2 {
-    color: var(--accent);
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-    text-shadow: 2px 2px 4px #000;
-}
-
-/* --- FOUNDER SECTION (SQUARE & MODERN) --- */
+/* --- FOUNDER SECTION (MPYA - SQUARE & MODERN) --- */
 .founder-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 20px;
-    padding: 0; /* Hakuna padding kwenye container kuu */
     overflow: hidden;
-    display: flex;
-    flex-direction: column; /* Picha juu, Maelezo chini */
     margin-bottom: 50px;
     box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    display: flex;
+    flex-wrap: wrap; /* Inajipanga vizuri kwenye simu */
 }
 
 .founder-img-box {
-    width: 100%;
-    height: 400px; /* Picha kubwa */
-    background: #1a1a1a;
+    flex: 1 1 300px; /* Inachukua nafasi upande wa kushoto */
+    min-height: 350px;
     position: relative;
 }
 
 .founder-img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Picha inajaa kwenye box */
-    object-position: top; /* Inaanzia juu ili kichwa kisikatike */
+    object-fit: cover; /* Picha inajaa kwenye box bila kubinywa */
+    display: block;
 }
 
 .founder-info {
+    flex: 1 1 400px; /* Maelezo upande wa kulia */
     padding: 40px;
-    text-align: center;
-    background: linear-gradient(to bottom, rgba(255,255,255,0.05), transparent);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .founder-info h2 {
     color: var(--accent);
-    font-size: 2.5rem;
-    margin-bottom: 5px;
+    font-size: 2.2rem;
+    margin-bottom: 15px;
     text-transform: uppercase;
-    letter-spacing: 2px;
-}
-
-.founder-title {
-    color: #aaa;
-    font-size: 1rem;
-    margin-bottom: 20px;
-    display: block;
-    font-weight: bold;
+    letter-spacing: 1px;
 }
 
 .founder-bio {
     font-size: 1.1rem;
     line-height: 1.8;
     color: #ddd;
-    max-width: 800px;
-    margin: 0 auto 30px auto;
+    margin-bottom: 20px;
 }
 
-/* --- ADMIN DASHBOARD TABLES --- */
+/* --- VIEW POST (KUZUIA PICHA KUWA KUBWA MNO) --- */
+.post-detail-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding-top: 20px;
+}
+
+.post-banner-img {
+    width: 100%;
+    max-height: 500px; /* Hii inazuia picha isiwe ndefu sana */
+    object-fit: contain; /* Picha itaonekana yote bila kukatika */
+    border-radius: 15px;
+    margin-bottom: 30px;
+    background: rgba(0,0,0,0.3); /* Background nyeusi nyuma ya picha */
+}
+
+/* --- CAROUSEL (SLIDESHOW) --- */
+.carousel-container {
+    height: 450px;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    background: #000;
+}
+.carousel-item {
+    height: 100%;
+    width: 100%;
+    display: none;
+    background-size: cover;
+    background-position: center;
+}
+.carousel-caption {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 40px;
+    background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
+    color: #fff;
+}
+
+/* --- ADMIN TABLES (DELETE BUTTONS) --- */
 .admin-table {
     width: 100%;
     border-collapse: collapse;
@@ -139,31 +120,24 @@ body {
     text-align: left;
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
-.admin-table th {
-    background: rgba(241, 196, 15, 0.1);
-    color: var(--accent);
-}
-.admin-table tr:hover {
-    background: rgba(255,255,255,0.02);
-}
+.admin-table th { background: rgba(241, 196, 15, 0.1); color: var(--accent); }
 
-/* --- GENERAL & SIDEBAR (Zinabaki vilevile) --- */
+/* --- GENERAL UI --- */
 .glass-panel {
     background: var(--glass-bg); border: 1px solid var(--glass-border);
     border-radius: 15px; padding: 30px; margin-bottom: 30px;
 }
 .btn {
-    padding: 12px 30px; background: var(--accent); color: #000;
+    padding: 12px 25px; background: var(--accent); color: #000;
     text-decoration: none; font-weight: bold; border-radius: 5px;
-    display: inline-block; cursor: pointer; border: none;
+    display: inline-block; border: none; cursor: pointer;
 }
 .btn-danger { background: var(--danger); color: white; }
 .btn:hover { transform: translateY(-3px); }
 
-/* Sidebar & Nav (Copy ile ya mwanzo hapa kama haipo, au iache kama ipo) */
+/* --- SIDEBAR --- */
 .menu-toggle { position: fixed; top: 20px; left: 20px; width: 50px; height: 50px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 2000; cursor: pointer; color: #000; }
 .sidebar { position: fixed; left: -280px; top: 0; width: 260px; height: 100%; background: rgba(0,0,0,0.95); transition: 0.3s; z-index: 1500; padding: 20px; }
 .sidebar.active { left: 0; }
-.nav-links li a { display: block; padding: 15px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .main-content { padding: 80px 20px; max-width: 1200px; margin: auto; }
 @media (min-width: 768px) { .main-content { margin-left: 0; } }
