@@ -7,11 +7,12 @@ from passlib.hash import sha256_crypt
 from sqlalchemy import or_ # Kwa ajili ya Search
 import cloudinary
 import cloudinary.uploader
+import cloudinary.api
 
 # --- CONFIGURATION ---
 app = Flask(__name__)
 
-# 1. Database (PostgreSQL kwa Render, SQLite kwa Local)
+# 1. Database Logic (PostgreSQL kwa Render, SQLite kwa Local)
 database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
@@ -28,6 +29,7 @@ app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__fil
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'admin_login'
+login_manager.login_message_category = 'info'
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -42,13 +44,14 @@ def save_file(file_storage):
     # Kama CLOUDINARY_URL ipo (Render), tumia hiyo
     if os.environ.get('CLOUDINARY_URL'):
         try:
+            # Upload to Cloudinary
             upload_result = cloudinary.uploader.upload(file_storage, resource_type="auto")
             return upload_result['secure_url']
         except Exception as e:
             print(f"Cloudinary Error: {e}")
             return None
     else:
-        # Local Backup
+        # Local Backup (Kwa ajili ya Pydroid/Computer)
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.makedirs(app.config['UPLOAD_FOLDER'])
         filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + file_storage.filename
@@ -123,7 +126,6 @@ def home():
                            carousel_posts=carousel_posts, posts=latest_posts, 
                            books=latest_books, videos=videos)
 
-# SEARCH ROUTE (MPYA)
 @app.route("/search")
 def search():
     query = request.args.get('q')
@@ -162,7 +164,7 @@ def view_post(post_id):
 
 @app.route('/download/<path:filename>')
 def download_book(filename):
-    # Kama ni URL (Cloudinary), elekeza huko
+    # Smart redirect for Cloudinary URLs
     if filename and (filename.startswith('http://') or filename.startswith('https://')):
         return redirect(filename)
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -189,14 +191,57 @@ def admin_login():
 @login_required
 def admin_dashboard():
     try:
-        total_books = Book.query.count()
-        total_posts = Post.query.count()
-        total_videos = Video.query.count()
+        # Tunavuta data zote ili admin azione na kuzifuta
+        all_books = Book.query.order_by(Book.date_uploaded.desc()).all()
+        all_posts = Post.query.order_by(Post.date_posted.desc()).all()
+        all_videos = Video.query.order_by(Video.date_uploaded.desc()).all()
+        
+        total_books = len(all_books)
+        total_posts = len(all_posts)
+        total_videos = len(all_videos)
     except:
+        all_books = []
+        all_posts = []
+        all_videos = []
         total_books = 0
         total_posts = 0
         total_videos = 0
-    return render_template('dashboard.html', total_books=total_books, total_posts=total_posts, total_videos=total_videos)
+        
+    return render_template('dashboard.html', 
+                           total_books=total_books, total_posts=total_posts, total_videos=total_videos,
+                           books=all_books, posts=all_posts, videos=all_videos)
+
+# --- DELETE ROUTES (MUHIMU: HAPA NDIPO KUFUTA KUNAFANYIKA) ---
+
+@app.route('/admin/delete_post/<int:id>', methods=['POST'])
+@login_required
+def delete_post(id):
+    post = Post.query.get_or_404(id)
+    # Hapa tunafuta rekodi kwenye DB (Cloudinary hatufuti kwa sasa ili isiwe complex)
+    db.session.delete(post)
+    db.session.commit()
+    flash('Post imefutwa kikamilifu!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_book/<int:id>', methods=['POST'])
+@login_required
+def delete_book(id):
+    book = Book.query.get_or_404(id)
+    db.session.delete(book)
+    db.session.commit()
+    flash('Kitabu kimefutwa kikamilifu!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_video/<int:id>', methods=['POST'])
+@login_required
+def delete_video(id):
+    video = Video.query.get_or_404(id)
+    db.session.delete(video)
+    db.session.commit()
+    flash('Video imefutwa kikamilifu!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+# --- ADD ROUTES ---
 
 @app.route('/admin/add_post', methods=['GET', 'POST'])
 @login_required
@@ -206,11 +251,13 @@ def add_post():
         content = request.form.get('content')
         is_carousel = request.form.get('is_carousel') == 'on'
         
-        image_url = save_file(request.files.get('image_file'))
+        image = request.files.get('image_file')
+        image_url = save_file(image)
         
         new_post = Post(title=title, content=content, image_file=image_url, is_carousel=is_carousel)
         db.session.add(new_post)
         db.session.commit()
+        flash('Post imeongezwa!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('add_post.html')
 
@@ -222,29 +269,33 @@ def add_book():
         author = request.form.get('author')
         description = request.form.get('description')
         category = request.form.get('category')
+        file = request.files.get('pdf_file')
         
-        file_url = save_file(request.files.get('pdf_file'))
-        
+        file_url = save_file(file)
+
         if file_url:
             new_book = Book(title=title, author=author, description=description, category=category, file_path=file_url)
             db.session.add(new_book)
             db.session.commit()
+            flash('Kitabu kimepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
     return render_template('add_book.html')
 
-# MPYA: Video Upload
 @app.route('/admin/add_video', methods=['GET', 'POST'])
 @login_required
 def add_video():
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
-        file_url = save_file(request.files.get('video_file'))
+        file = request.files.get('video_file')
         
+        file_url = save_file(file)
+
         if file_url:
             new_video = Video(title=title, description=description, video_file=file_url)
             db.session.add(new_video)
             db.session.commit()
+            flash('Video imepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
     return render_template('add_video.html')
 
@@ -271,17 +322,9 @@ def edit_about():
             about_info.founder_image = new_image
             
         db.session.commit()
+        flash('Taarifa zimebadilishwa!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('edit_about.html', about_info=about_info)
-
-@app.route('/admin/delete_post/<int:id>')
-@login_required
-def delete_post(id):
-    post = Post.query.get_or_404(id)
-    db.session.delete(post)
-    db.session.commit()
-    flash('Post imefutwa', 'success')
-    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin_logout')
 @login_required
@@ -301,8 +344,8 @@ with app.app_context():
         if not About.query.first():
             db.session.add(About())
             db.session.commit()
-    except:
-        pass
+    except Exception as e:
+        print(f"DB Init Error: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)
