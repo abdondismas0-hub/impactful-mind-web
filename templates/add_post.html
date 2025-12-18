@@ -5,22 +5,44 @@
     <h2 style="text-align: center; color: var(--accent);">Andika Post Mpya</h2>
     
     <form method="POST" enctype="multipart/form-data">
-        <label style="display: block; margin: 10px 0;">Kichwa:</label>
-        <input type="text" name="title" required>
+        <label style="display: block; margin: 10px 0; font-weight: bold;">Kichwa cha Habari:</label>
+        <input type="text" name="title" required placeholder="Mfano: Jinsi ya Kufanikiwa...">
         
-        <label style="display: block; margin: 10px 0;">Picha (Optional):</label>
-        <input type="file" name="image_file" style="padding: 10px;">
+        <label style="display: block; margin: 20px 0 10px 0; font-weight: bold;">Picha ya Post:</label>
         
-        <div style="margin: 15px 0; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px;">
-            <input type="checkbox" name="is_carousel" style="width: auto;">
-            <span style="color: var(--accent);">Onyesha kwenye Slideshow (Carousel)</span>
+        <!-- ENEO KUBWA LA KU-UPLOAD -->
+        <label class="upload-area">
+            <input type="file" name="image_file" accept="image/*" onchange="previewImage(event)">
+            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+            <span class="upload-label" id="uploadText">Gusa hapa kuchagua picha kubwa</span>
+            <img id="imagePreview" style="max-width: 100%; max-height: 200px; margin-top: 10px; display: none; border-radius: 10px;">
+        </label>
+
+        <div style="margin: 20px 0; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; display: flex; align-items: center;">
+            <input type="checkbox" name="is_carousel" style="width: 20px; height: 20px; margin-bottom: 0; margin-right: 15px;">
+            <span style="color: var(--accent); font-size: 1.1rem;">Onyesha kwenye Slideshow (Carousel)</span>
         </div>
         
-        <label style="display: block; margin: 10px 0;">Maelezo:</label>
-        <textarea name="content" rows="10" required></textarea>
+        <label style="display: block; margin: 10px 0; font-weight: bold;">Maelezo:</label>
+        <textarea name="content" rows="12" required placeholder="Andika maelezo kwa kirefu hapa..."></textarea>
         
-        <button type="submit" class="btn" style="width: 100%; margin-top: 20px;">Chapisha</button>
+        <button type="submit" class="btn" style="width: 100%; margin-top: 20px;">Chapisha Post</button>
     </form>
 </div>
+
+<!-- Script ndogo ya kuonyesha picha uliyochagua kabla ya ku-upload -->
+<script>
+    function previewImage(event) {
+        var reader = new FileReader();
+        reader.onload = function(){
+            var output = document.getElementById('imagePreview');
+            output.src = reader.result;
+            output.style.display = 'block';
+            document.getElementById('uploadText').innerText = "Picha imechaguliwa!";
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+</script>
 {% endblock %}
+
 
