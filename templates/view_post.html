@@ -1,30 +1,29 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="padding-top: 30px; max-width: 900px; margin: auto;">
+<div class="post-detail-container">
     
-    <div class="glass-panel" style="padding: 0; overflow: hidden;">
-        <!-- Picha Kamili -->
+    <div class="glass-panel" style="padding: 30px;">
+        <!-- Picha ya Post (Imeboreshwa CSS) -->
         {% if post.image_file %}
-        <div style="width: 100%; background: #000; text-align: center;">
-            <img src="{{ url_for('download_book', filename=post.image_file) }}" class="full-post-img" alt="{{ post.title }}">
+        <div style="text-align: center;">
+            <img src="{{ url_for('download_book', filename=post.image_file) }}" class="post-banner-img" alt="{{ post.title }}">
         </div>
         {% endif %}
 
-        <div style="padding: 40px;">
-            <h1 style="color: var(--accent); font-size: 2.5rem; margin-top: 0; line-height: 1.3;">{{ post.title }}</h1>
-            <p style="color: #aaa; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 30px;">
-                <i class="far fa-calendar-alt"></i> Imechapishwa: {{ post.date_posted.strftime('%d %B %Y') }}
-            </p>
-            
-            <div style="line-height: 2; font-size: 1.15rem; color: #e0e0e0; white-space: pre-wrap;">
-                {{ post.content }}
-            </div>
+        <h1 style="color: var(--accent); font-size: 2.5rem; margin-top: 0; line-height: 1.3;">{{ post.title }}</h1>
+        
+        <p style="color: #aaa; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 30px;">
+            <i class="far fa-calendar-alt"></i> Imechapishwa: {{ post.date_posted.strftime('%d %B %Y') }}
+        </p>
+        
+        <div style="line-height: 2; font-size: 1.15rem; color: #e0e0e0; white-space: pre-wrap;">
+            {{ post.content }}
+        </div>
 
-            <br><br>
-            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                <a href="{{ url_for('posts') }}" class="btn" style="background: transparent; border: 1px solid var(--accent); color: var(--accent);">&larr; Rudi kwenye Posts</a>
-            </div>
+        <br><br>
+        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+            <a href="{{ url_for('posts') }}" class="btn" style="background: transparent; border: 1px solid var(--accent); color: var(--accent);">&larr; Rudi kwenye Posts</a>
         </div>
     </div>
 
