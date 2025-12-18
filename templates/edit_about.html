@@ -2,33 +2,47 @@
 
 {% block content %}
 <div class="glass-panel" style="max-width: 800px; margin: 50px auto;">
-    <h2 style="text-align: center; color: var(--accent);">Hariri Taarifa za Shirika</h2>
+    <h2 style="text-align: center; color: var(--accent);">Hariri Founder Info</h2>
     
     <form method="POST" enctype="multipart/form-data">
-        
-        <!-- Founder Details -->
-        <h3 style="color: #3498db; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Founder</h3>
         <label style="display: block; margin: 10px 0;">Jina la Founder:</label>
         <input type="text" name="founder_name" value="{{ about_info.founder_name }}" required>
         
-        <label style="display: block; margin: 10px 0;">Picha (Square):</label>
-        <input type="file" name="founder_image" style="padding: 10px;">
+        <label style="display: block; margin: 20px 0 10px 0;">Picha ya Founder (Square):</label>
         
-        <label style="display: block; margin: 10px 0;">Bio / Maelezo:</label>
-        <textarea name="founder_bio" rows="6" required>{{ about_info.founder_bio }}</textarea>
+        <!-- ENEO KUBWA LA KU-UPLOAD -->
+        <label class="upload-area">
+            <input type="file" name="founder_image" accept="image/*" onchange="previewFounder(event)">
+            <i class="fas fa-user-circle upload-icon"></i>
+            <span class="upload-label" id="founderText">Gusa hapa kubadili picha</span>
+            <img id="founderPreview" style="max-width: 200px; max-height: 200px; margin-top: 10px; display: none; border-radius: 50%; border: 3px solid var(--accent);">
+        </label>
+        
+        <label style="display: block; margin: 10px 0;">Maelezo (Bio):</label>
+        <textarea name="founder_bio" rows="8" required>{{ about_info.founder_bio }}</textarea>
 
-        <!-- Mission & Vision -->
-        <h3 style="color: #2ecc71; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-top: 30px;">Mission & Vision</h3>
-        
-        <label style="display: block; margin: 10px 0;">Mission (Dhamira):</label>
-        <textarea name="mission" rows="4" required>{{ about_info.mission }}</textarea>
+        <label style="display: block; margin: 10px 0;">Mission:</label>
+        <textarea name="mission" rows="4">{{ about_info.mission }}</textarea>
 
-        <label style="display: block; margin: 10px 0;">Vision (Maono):</label>
-        <textarea name="vision" rows="4" required>{{ about_info.vision }}</textarea>
+        <label style="display: block; margin: 10px 0;">Vision:</label>
+        <textarea name="vision" rows="4">{{ about_info.vision }}</textarea>
         
-        <button type="submit" class="btn" style="width: 100%; margin-top: 30px; background-color: #e67e22;">Hifadhi Mabadiliko</button>
+        <button type="submit" class="btn" style="width: 100%; margin-top: 20px; background-color: #e67e22;">Hifadhi Mabadiliko</button>
     </form>
 </div>
+
+<script>
+    function previewFounder(event) {
+        var reader = new FileReader();
+        reader.onload = function(){
+            var output = document.getElementById('founderPreview');
+            output.src = reader.result;
+            output.style.display = 'block';
+            document.getElementById('founderText').innerText = "Picha mpya imechaguliwa!";
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+</script>
 {% endblock %}
 
 
