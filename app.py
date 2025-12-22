@@ -1,5 +1,5 @@
 import os
-import sys # Kwa ajili ya ku-print logs
+import sys
 from datetime import datetime
 from flask import Flask, render_template, url_for, flash, redirect, request, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
@@ -8,24 +8,20 @@ from passlib.hash import sha256_crypt
 from sqlalchemy import or_
 import cloudinary
 import cloudinary.uploader
+import cloudinary.api
 
 # --- CONFIGURATION ---
 app = Flask(__name__)
 
-# 1. DATABASE SETUP & LOGGING
+# Database Logic
 database_url = os.environ.get('DATABASE_URL')
-
-if database_url:
-    # Fix ya Render (postgres -> postgresql)
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print(">>> SYSTEM STATUS: IMETAMBUA RENDER POSTGRESQL", file=sys.stderr)
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     DB_PATH = os.path.join(BASE_DIR, 'database.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
-    print(">>> SYSTEM STATUS: INATUMIA SQLITE (LOCAL)", file=sys.stderr)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'impactful_mind_master_key_2025' 
@@ -39,22 +35,22 @@ login_manager.login_view = 'admin_login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- HELPER: SAVE FILE ---
+# --- HELPER: SAVE FILE (Yenye Ripoti ya Makosa) ---
 def save_file(file_storage):
+    """ Jaribu ku-upload. Ikishindikana, rudisha None na print error. """
     if not file_storage or file_storage.filename == '':
         return None
     
-    # Check Cloudinary
     if os.environ.get('CLOUDINARY_URL'):
         try:
             upload_result = cloudinary.uploader.upload(file_storage, resource_type="auto")
-            print(f">>> UPLOAD SUCCESS: {upload_result['secure_url']}", file=sys.stderr)
-            return upload_result['secure_url']
+            return upload_result['secure_url'] 
         except Exception as e:
+            # Hapa tunadaka kosa la Cloudinary (kama API key mbovu)
             print(f">>> CLOUDINARY ERROR: {e}", file=sys.stderr)
             return None
     else:
-        # Local Fallback
+        # Local Backup
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.makedirs(app.config['UPLOAD_FOLDER'])
         filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + file_storage.filename
@@ -105,8 +101,7 @@ class About(db.Model):
 def inject_global_vars():
     try:
         about_info = About.query.first()
-    except Exception as e:
-        print(f">>> ABOUT QUERY ERROR: {e}", file=sys.stderr)
+    except:
         about_info = None
     return dict(about_info=about_info)
 
@@ -114,28 +109,22 @@ def inject_global_vars():
 
 @app.route("/")
 def home():
-    # Tumeondoa try/except kubwa ili tuone error kama ipo
     try:
         carousel_posts = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
         latest_posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
         latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
-        # Jaribu video
         try:
             videos = Video.query.order_by(Video.date_uploaded.desc()).limit(2).all()
         except:
             videos = []
-            
         about_info = About.query.first()
-        
-    except Exception as e:
-        print(f">>> HOME PAGE ERROR: {e}", file=sys.stderr)
-        # Rudisha data tupu ili isicrash, lakini tume-print error kwenye logs
+    except:
         carousel_posts = []
         latest_posts = []
         latest_books = []
         videos = []
         about_info = None
-
+        
     return render_template('index.html', title='Nyumbani', 
                            carousel_posts=carousel_posts, posts=latest_posts, 
                            books=latest_books, videos=videos, about_info=about_info)
@@ -143,22 +132,23 @@ def home():
 @app.route("/search")
 def search():
     query = request.args.get('q')
-    posts = []
-    books = []
     if query:
         try:
             posts = Post.query.filter(or_(Post.title.ilike(f'%{query}%'), Post.content.ilike(f'%{query}%'))).all()
             books = Book.query.filter(or_(Book.title.ilike(f'%{query}%'), Book.author.ilike(f'%{query}%'))).all()
-        except Exception as e:
-            print(f">>> SEARCH ERROR: {e}", file=sys.stderr)
+        except:
+            posts = []
+            books = []
+    else:
+        posts = []
+        books = []
     return render_template('search.html', title='Matokeo', posts=posts, books=books, query=query)
 
 @app.route("/library")
 def library():
     try:
         books = Book.query.all()
-    except Exception as e:
-        print(f">>> LIBRARY ERROR: {e}", file=sys.stderr)
+    except:
         books = []
     return render_template('library.html', title='Maktaba', books=books)
 
@@ -166,8 +156,7 @@ def library():
 def posts():
     try:
         posts = Post.query.all()
-    except Exception as e:
-        print(f">>> POSTS ERROR: {e}", file=sys.stderr)
+    except:
         posts = []
     return render_template('posts.html', title='Daily Posts', posts=posts)
 
@@ -200,9 +189,8 @@ def admin_login():
                 return redirect(url_for('admin_dashboard'))
             else:
                 flash('Login imeshindikana', 'danger')
-        except Exception as e:
-             print(f">>> LOGIN ERROR: {e}", file=sys.stderr)
-             flash('Database Error', 'danger')
+        except:
+            flash('DB Error', 'danger')
     return render_template('login.html')
 
 @app.route("/admin")
@@ -211,19 +199,15 @@ def admin_dashboard():
     try:
         total_books = Book.query.count()
         total_posts = Post.query.count()
+        try: total_videos = Video.query.count()
+        except: total_videos = 0
         all_books = Book.query.order_by(Book.date_uploaded.desc()).all()
         all_posts = Post.query.order_by(Post.date_posted.desc()).all()
-        try: 
-            total_videos = Video.query.count()
-            all_videos = Video.query.order_by(Video.date_uploaded.desc()).all()
-        except: 
-            total_videos = 0
-            all_videos = []
-    except Exception as e:
-        print(f">>> DASHBOARD ERROR: {e}", file=sys.stderr)
+        try: all_videos = Video.query.order_by(Video.date_uploaded.desc()).all()
+        except: all_videos = []
+    except:
         total_books = 0; total_posts = 0; total_videos = 0
         all_books = []; all_posts = []; all_videos = []
-        
     return render_template('dashboard.html', 
                            total_books=total_books, total_posts=total_posts, total_videos=total_videos,
                            books=all_books, posts=all_posts, videos=all_videos)
@@ -236,12 +220,18 @@ def add_post():
         content = request.form.get('content')
         is_carousel = request.form.get('is_carousel') == 'on'
         
+        # Pata Picha
         image_url = save_file(request.files.get('image_file'))
         
+        # KAMA UPLOAD IMEFELI (image_url ni None), TUNAMJUZA ADMIN
+        if request.files.get('image_file') and request.files.get('image_file').filename != '' and image_url is None:
+            flash('Kosa: Picha haikupakiwa. Angalia Cloudinary Settings kwenye Render.', 'danger')
+            return redirect(url_for('add_post'))
+
         new_post = Post(title=title, content=content, image_file=image_url, is_carousel=is_carousel)
         db.session.add(new_post)
         db.session.commit()
-        flash('Post imehifadhiwa!', 'success')
+        flash('Post imehifadhiwa kikamilifu!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('add_post.html')
 
@@ -253,6 +243,7 @@ def add_book():
         author = request.form.get('author')
         description = request.form.get('description')
         category = request.form.get('category')
+        
         file_url = save_file(request.files.get('pdf_file'))
         
         if file_url:
@@ -261,6 +252,8 @@ def add_book():
             db.session.commit()
             flash('Kitabu kimepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Kosa: Faili halikupakiwa (Angalia Cloudinary)', 'danger')
     return render_template('add_book.html')
 
 @app.route('/admin/add_video', methods=['GET', 'POST'])
@@ -277,6 +270,8 @@ def add_video():
             db.session.commit()
             flash('Video imepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Kosa: Video haikupakiwa (Angalia Cloudinary)', 'danger')
     return render_template('add_video.html')
 
 @app.route('/admin/edit_about', methods=['GET', 'POST'])
@@ -297,9 +292,14 @@ def edit_about():
         about_info.mission = request.form.get('mission')
         about_info.vision = request.form.get('vision')
         
-        new_image = save_file(request.files.get('founder_image'))
-        if new_image:
-            about_info.founder_image = new_image
+        # Picha ya Founder
+        if request.files.get('founder_image') and request.files.get('founder_image').filename != '':
+            new_image = save_file(request.files.get('founder_image'))
+            if new_image:
+                about_info.founder_image = new_image
+            else:
+                flash('Kosa: Picha ya Founder haikupakiwa. Cloudinary Error.', 'danger')
+                return redirect(url_for('edit_about'))
             
         db.session.commit()
         flash('Taarifa zimesasishwa!', 'success')
@@ -312,6 +312,7 @@ def delete_post(id):
     post = Post.query.get_or_404(id)
     db.session.delete(post)
     db.session.commit()
+    flash('Imefutwa!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_book/<int:id>', methods=['POST'])
@@ -320,6 +321,7 @@ def delete_book(id):
     book = Book.query.get_or_404(id)
     db.session.delete(book)
     db.session.commit()
+    flash('Imefutwa!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_video/<int:id>', methods=['POST'])
@@ -328,6 +330,7 @@ def delete_video(id):
     video = Video.query.get_or_404(id)
     db.session.delete(video)
     db.session.commit()
+    flash('Imefutwa!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin_logout')
@@ -336,24 +339,20 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- DB INIT (With Logging) ---
+# --- AUTO-CREATE DATABASE ---
 with app.app_context():
     try:
         db.create_all()
-        print(">>> DATABASE TABLES CREATED", file=sys.stderr)
-        
         if not User.query.filter_by(username='admin').first():
             hashed_pw = sha256_crypt.hash("adminpass")
             user = User(username='admin', password=hashed_pw, is_admin=True)
             db.session.add(user)
             db.session.commit()
-            print(">>> ADMIN CREATED", file=sys.stderr)
-            
         if not About.query.first():
             db.session.add(About())
             db.session.commit()
     except Exception as e:
-        print(f">>> DB INIT ERROR: {e}", file=sys.stderr)
+        print(f"DB Init Error: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)
