@@ -1,4 +1,4 @@
-/* IMPACTFUL MIND - PREMIUM DESIGN V3 */
+/* IMPACTFUL MIND - SMART FIT IMAGES */
 :root {
     --primary-bg: #0c1422;
     --glass-bg: rgba(255, 255, 255, 0.05);
@@ -10,117 +10,130 @@
 }
 
 body {
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
     font-family: 'Poppins', sans-serif;
     background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
     color: var(--text);
     min-height: 100vh;
 }
 
-/* --- FOUNDER SECTION (MPYA - SQUARE & MODERN) --- */
+/* --- 1. CAROUSEL / SLIDESHOW (SMART FIT) --- */
+/* Picha haitakatika tena. Itaonekana yote ikiwa na background blurry */
+.carousel-container {
+    height: 500px;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    background: #000;
+    border: 1px solid var(--glass-border);
+}
+
+.carousel-item {
+    height: 100%;
+    width: 100%;
+    display: none;
+    position: relative;
+    display: flex; /* Center image */
+    align-items: center;
+    justify-content: center;
+}
+
+/* Background iliyofifia (Inajaza nafasi tupu) */
+.slide-bg {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(25px) brightness(0.4); /* Blur na Giza kidogo */
+    z-index: 1;
+}
+
+/* Picha Halisi (Inakaa juu, Haikatiki) */
+.slide-img-front {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: 100%;
+    object-fit: contain; /* Hii ndiyo siri: Picha yote inaonekana */
+    z-index: 2;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5); /* Kivuli kidogo ili itokeze */
+}
+
+.carousel-caption {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 30px;
+    background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
+    color: #fff;
+    z-index: 3;
+    text-align: center; /* Maandishi katikati */
+}
+.carousel-caption h2 {
+    color: var(--accent);
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px #000;
+}
+
+/* --- 2. LATEST POSTS (VIBOKSI VYA CHINI) --- */
+.post-list-item {
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.post-thumb-box {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid var(--glass-border);
+}
+
+.post-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Hapa tunatumia cover kwa sababu ni kijipicha kidogo tu */
+}
+
+/* --- 3. FOUNDER (SQUARE) --- */
 .founder-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 20px;
     overflow: hidden;
     margin-bottom: 50px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
     display: flex;
-    flex-wrap: wrap; /* Inajipanga vizuri kwenye simu */
+    flex-wrap: wrap;
+    align-items: center;
 }
-
 .founder-img-box {
-    flex: 1 1 300px; /* Inachukua nafasi upande wa kushoto */
-    min-height: 350px;
+    flex: 1 1 350px;
+    height: 450px;
     position: relative;
+    background: #000; /* Nyeusi nyuma kama picha haijai */
 }
-
 .founder-img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Picha inajaa kwenye box bila kubinywa */
-    display: block;
+    object-fit: cover; /* Founder anabaki cover ili aonekana vizuri karibu */
+    object-position: top center; /* Focus kichwani */
 }
-
 .founder-info {
-    flex: 1 1 400px; /* Maelezo upande wa kulia */
+    flex: 1 1 400px;
     padding: 40px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
 }
-
 .founder-info h2 {
     color: var(--accent);
-    font-size: 2.2rem;
-    margin-bottom: 15px;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
     text-transform: uppercase;
-    letter-spacing: 1px;
 }
-
-.founder-bio {
-    font-size: 1.1rem;
-    line-height: 1.8;
-    color: #ddd;
-    margin-bottom: 20px;
-}
-
-/* --- VIEW POST (KUZUIA PICHA KUWA KUBWA MNO) --- */
-.post-detail-container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding-top: 20px;
-}
-
-.post-banner-img {
-    width: 100%;
-    max-height: 500px; /* Hii inazuia picha isiwe ndefu sana */
-    object-fit: contain; /* Picha itaonekana yote bila kukatika */
-    border-radius: 15px;
-    margin-bottom: 30px;
-    background: rgba(0,0,0,0.3); /* Background nyeusi nyuma ya picha */
-}
-
-/* --- CAROUSEL (SLIDESHOW) --- */
-.carousel-container {
-    height: 450px;
-    border-radius: 20px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    background: #000;
-}
-.carousel-item {
-    height: 100%;
-    width: 100%;
-    display: none;
-    background-size: cover;
-    background-position: center;
-}
-.carousel-caption {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    padding: 40px;
-    background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
-    color: #fff;
-}
-
-/* --- ADMIN TABLES (DELETE BUTTONS) --- */
-.admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background: rgba(0,0,0,0.2);
-    border-radius: 10px;
-    overflow: hidden;
-}
-.admin-table th, .admin-table td {
-    padding: 15px;
-    text-align: left;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.admin-table th { background: rgba(241, 196, 15, 0.1); color: var(--accent); }
 
 /* --- GENERAL UI --- */
 .glass-panel {
@@ -128,16 +141,23 @@ body {
     border-radius: 15px; padding: 30px; margin-bottom: 30px;
 }
 .btn {
-    padding: 12px 25px; background: var(--accent); color: #000;
+    padding: 8px 25px; background: var(--accent); color: #000;
     text-decoration: none; font-weight: bold; border-radius: 5px;
-    display: inline-block; border: none; cursor: pointer;
+    display: inline-block; cursor: pointer; border: none;
 }
-.btn-danger { background: var(--danger); color: white; }
-.btn:hover { transform: translateY(-3px); }
+.btn:hover { transform: translateY(-2px); background: #fff; }
 
-/* --- SIDEBAR --- */
+/* Sidebar & Nav */
 .menu-toggle { position: fixed; top: 20px; left: 20px; width: 50px; height: 50px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 2000; cursor: pointer; color: #000; }
 .sidebar { position: fixed; left: -280px; top: 0; width: 260px; height: 100%; background: rgba(0,0,0,0.95); transition: 0.3s; z-index: 1500; padding: 20px; }
 .sidebar.active { left: 0; }
+.nav-links { list-style: none; padding: 0; margin-top: 60px; }
+.nav-links li a { display: block; padding: 15px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .main-content { padding: 80px 20px; max-width: 1200px; margin: auto; }
 @media (min-width: 768px) { .main-content { margin-left: 0; } }
+
+/* Admin Upload */
+.upload-area { border: 2px dashed var(--accent); padding: 40px; text-align: center; background: rgba(255,255,255,0.05); border-radius: 15px; cursor: pointer; margin-bottom: 20px; display: block; }
+.upload-area input { display: none; }
+.admin-table th { background: rgba(241, 196, 15, 0.1); color: var(--accent); padding: 10px; text-align: left; }
+.admin-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
