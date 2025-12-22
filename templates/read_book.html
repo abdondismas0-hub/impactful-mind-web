@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding-top: 30px; max-width: 1000px; margin: auto;">
+    
+    <div class="glass-panel" style="padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="color: var(--accent); margin: 0;">{{ book.title }}</h2>
+        <a href="{{ url_for('library') }}" class="btn" style="background: transparent; border: 1px solid white;">Funga</a>
+    </div>
+
+    <div class="glass-panel" style="padding: 0; overflow: hidden; height: 80vh;">
+        <!-- PDF Viewer (Embed) -->
+        <!-- #toolbar=0 inaficha menu ya download (kwa baadhi ya browser) -->
+        <embed src="{{ book.file_path }}#toolbar=0" type="application/pdf" width="100%" height="100%" />
+    </div>
+
+</div>
+{% endblock %}
+
