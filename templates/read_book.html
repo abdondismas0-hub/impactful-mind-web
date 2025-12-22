@@ -1,49 +1,29 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="padding-top: 20px; height: 100vh; display: flex; flex-direction: column;">
+<div style="padding-top: 30px; height: 90vh; display: flex; flex-direction: column;">
     
-    <!-- Kichwa na Kitufe cha Kufunga -->
-    <div class="glass-panel" style="padding: 15px 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+    <!-- Header -->
+    <div class="glass-panel" style="padding: 15px 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
         <h2 style="color: var(--accent); margin: 0; font-size: 1.2rem;">{{ book.title }}</h2>
         <a href="{{ url_for('library') }}" class="btn" style="background: transparent; border: 1px solid white; padding: 5px 15px; font-size: 0.9rem; color: white;">
             <i class="fas fa-times"></i> Funga
         </a>
     </div>
 
-    <!-- PDF VIEWER (NATIVE EMBED) -->
-    <div class="glass-panel" style="padding: 0; overflow: hidden; flex-grow: 1; background: #333; border-radius: 10px; position: relative;">
+    <!-- PDF VIEWER (Direct Embed) -->
+    <div class="pdf-viewer-box">
+        <!-- Tunatumia link ya Cloudinary moja kwa moja -->
+        <embed src="{{ book.file_path }}" type="application/pdf" width="100%" height="100%" />
         
-        <!-- Njia ya 1: Object Tag (Bora kwa Kompyuta/Android Mpya) -->
-        <object data="{{ book.file_path }}" type="application/pdf" width="100%" height="100%">
-            
-            <!-- Njia ya 2: Iframe (Backup) -->
-            <iframe src="{{ book.file_path }}" width="100%" height="100%" style="border: none;">
-                
-                <!-- Njia ya 3: Ujumbe kama vyote vimegoma -->
-                <div style="text-align: center; padding: 50px; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                    <i class="fas fa-book-open fa-4x" style="color: #ccc; margin-bottom: 20px;"></i>
-                    <p>Kivinjari chako hakiwezi kuonyesha PDF hii hapa moja kwa moja.</p>
-                    <a href="{{ book.file_path }}" target="_blank" class="btn" style="margin-top: 20px; background-color: var(--accent); color: black;">
-                        Bofya Hapa Kusoma
-                    </a>
-                </div>
-
-            </iframe>
-        </object>
-
+        <!-- Ujumbe wa dharura kama simu haiwezi ku-embed -->
+        <div style="position: absolute; z-index: -1; text-align: center; width: 100%; top: 50%;">
+            <p>Inapakia PDF...</p>
+            <a href="{{ book.file_path }}" target="_blank" class="btn">Bofya hapa kusoma</a>
+        </div>
     </div>
 
 </div>
-
-<!-- CSS ya kuzuia selection/copying (Ulinzi wa ziada) -->
-<style>
-    body {
-        user-select: none; /* Inazuia kukopi maandishi */
-        -webkit-user-select: none;
-    }
-</style>
 {% endblock %}
 
 
-                
