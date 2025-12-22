@@ -4,16 +4,33 @@
 <div style="padding-top: 30px; max-width: 1000px; margin: auto;">
     
     <div class="glass-panel" style="padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="color: var(--accent); margin: 0;">{{ book.title }}</h2>
+        <h2 style="color: var(--accent); margin: 0; font-size: 1.5rem;">{{ book.title }}</h2>
         <a href="{{ url_for('library') }}" class="btn" style="background: transparent; border: 1px solid white;">Funga</a>
     </div>
 
-    <div class="glass-panel" style="padding: 0; overflow: hidden; height: 80vh;">
-        <!-- PDF Viewer (Embed) -->
-        <!-- #toolbar=0 inaficha menu ya download (kwa baadhi ya browser) -->
-        <embed src="{{ book.file_path }}#toolbar=0" type="application/pdf" width="100%" height="100%" />
+    <div class="glass-panel" style="padding: 0; overflow: hidden; height: 85vh; background: #fff;">
+        
+        <!-- PDF VIEWER: Tunatumia Google Docs Viewer kuonyesha PDF kutoka Cloudinary -->
+        <!-- Hii inazuia watu kupakua kirahisi na inahakikisha inasomeka kwenye simu zote -->
+        
+        {% if 'cloudinary' in book.file_path or 'http' in book.file_path %}
+            <iframe 
+                src="https://docs.google.com/gview?url={{ book.file_path }}&embedded=true" 
+                style="width:100%; height:100%;" 
+                frameborder="0">
+            </iframe>
+        {% else %}
+            <!-- Fallback kwa Local Files (Kama bado zipo) -->
+            <embed src="{{ url_for('download_book', filename=book.file_path) }}#toolbar=0" type="application/pdf" width="100%" height="100%" />
+        {% endif %}
+
+    </div>
+
+    <div style="text-align: center; margin-top: 10px;">
+        <p style="color: #888; font-size: 0.8rem;">Ikiwa haifunguki, jaribu ku-refresh ukurasa.</p>
     </div>
 
 </div>
 {% endblock %}
+
 
