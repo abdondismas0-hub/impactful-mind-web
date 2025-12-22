@@ -12,52 +12,45 @@ import cloudinary.api
 # --- CONFIGURATION ---
 app = Flask(__name__)
 
-# --- SEHEMU MUHIMU: KULAZIMISHA DATABASE YA KUDUMU ---
-# Hii inahakikisha data haziendi kwenye 'database.db' inayofutika
+# 1. DATABASE SETUP (Render PostgreSQL vs Local SQLite)
 database_url = os.environ.get('DATABASE_URL')
 
-if database_url:
-    # Tuko Render: Tumia PostgreSQL ya Kudumu
-    # Fix kwa ajili ya Render ambayo inatumia 'postgres://' badala ya 'postgresql://'
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+if database_url and database_url.startswith("postgres://"):
+    # Fix kwa ajili ya Render (postgres -> postgresql)
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print("--- IMEUNGANISHWA NA POSTGRESQL (DATA ZIKO SALAMA) ---")
 else:
-    # Tuko Local (Simu): Tumia SQLite
+    # Local Fallback
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     DB_PATH = os.path.join(BASE_DIR, 'database.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
-    print("--- IMEUNGANISHWA NA SQLITE (KWA MAJARIBIO TU) ---")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'impactful_mind_master_key_2025' 
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'impactful_mind_safe_key_2025')
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
 
-# Cloudinary Setup (Kwa ajili ya Picha)
-cloudinary_url = os.environ.get('CLOUDINARY_URL')
-# (Cloudinary hujiseti yenyewe ikiona variable hii)
+# 2. CLOUDINARY CONFIG (Inasoma Environment Variable 'CLOUDINARY_URL')
+# Hakikisha umeweka CLOUDINARY_URL kule Render
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'admin_login'
+login_manager.login_message_category = 'info'
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- HELPER: SAVE FILE (Usalama wa Picha) ---
+# --- HELPER: SAVE FILE (Inapeleka Cloudinary) ---
 def save_file(file_storage):
-    """ 
-    Hii function inahakikisha faili linaenda Cloudinary.
-    Kama Cloudinary haipo, inakataa ku-save ili usipoteze muda.
-    """
+    """ Hifadhi faili Cloudinary (Lisifutike). """
     if not file_storage or file_storage.filename == '':
         return None
     
+    # Angalia kama CLOUDINARY ipo (Render)
     if os.environ.get('CLOUDINARY_URL'):
         try:
-            # Upload to Cloudinary
+            # Upload Cloudinary
             upload_result = cloudinary.uploader.upload(file_storage, resource_type="auto")
             return upload_result['secure_url'] 
         except Exception as e:
@@ -128,14 +121,13 @@ def home():
         carousel_posts = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
         latest_posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
         latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
-        # Handle cases where Video table might not exist yet
+        # Handle Video safely
         try:
             videos = Video.query.order_by(Video.date_uploaded.desc()).limit(2).all()
         except:
             videos = []
         about_info = About.query.first()
-    except Exception as e:
-        print(f"Error Loading Home: {e}")
+    except:
         carousel_posts = []
         latest_posts = []
         latest_books = []
@@ -150,8 +142,12 @@ def home():
 def search():
     query = request.args.get('q')
     if query:
-        posts = Post.query.filter(or_(Post.title.ilike(f'%{query}%'), Post.content.ilike(f'%{query}%'))).all()
-        books = Book.query.filter(or_(Book.title.ilike(f'%{query}%'), Book.author.ilike(f'%{query}%'))).all()
+        try:
+            posts = Post.query.filter(or_(Post.title.ilike(f'%{query}%'), Post.content.ilike(f'%{query}%'))).all()
+            books = Book.query.filter(or_(Book.title.ilike(f'%{query}%'), Book.author.ilike(f'%{query}%'))).all()
+        except:
+            posts = []
+            books = []
     else:
         posts = []
         books = []
@@ -184,6 +180,7 @@ def view_post(post_id):
 
 @app.route('/download/<path:filename>')
 def download_book(filename):
+    # Smart redirect for Cloudinary URLs
     if filename and (filename.startswith('http://') or filename.startswith('https://')):
         return redirect(filename)
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -203,7 +200,7 @@ def admin_login():
             else:
                 flash('Login imeshindikana', 'danger')
         except:
-            flash('Database Error: Jaribu tena baadaye', 'danger')
+            flash('DB Error', 'danger')
     return render_template('login.html')
 
 @app.route("/admin")
@@ -246,7 +243,6 @@ def add_post():
         new_post = Post(title=title, content=content, image_file=image_url, is_carousel=is_carousel)
         db.session.add(new_post)
         db.session.commit()
-        flash('Post imehifadhiwa!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('add_post.html')
 
@@ -258,16 +254,14 @@ def add_book():
         author = request.form.get('author')
         description = request.form.get('description')
         category = request.form.get('category')
+        
         file_url = save_file(request.files.get('pdf_file'))
         
         if file_url:
             new_book = Book(title=title, author=author, description=description, category=category, file_path=file_url)
             db.session.add(new_book)
             db.session.commit()
-            flash('Kitabu kimepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
-        else:
-            flash('Kosa: Tafadhali pakia PDF.', 'danger')
     return render_template('add_book.html')
 
 @app.route('/admin/add_video', methods=['GET', 'POST'])
@@ -276,6 +270,7 @@ def add_video():
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
+        
         file_url = save_file(request.files.get('video_file'))
         
         if file_url:
@@ -295,7 +290,7 @@ def edit_about():
             db.session.add(about_info)
             db.session.commit()
     except:
-        return "Database Error"
+        return "DB Error"
         
     if request.method == 'POST':
         about_info.founder_name = request.form.get('founder_name')
@@ -308,7 +303,6 @@ def edit_about():
             about_info.founder_image = new_image
             
         db.session.commit()
-        flash('Taarifa zimebadilishwa!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('edit_about.html', about_info=about_info)
 
@@ -318,7 +312,6 @@ def delete_post(id):
     post = Post.query.get_or_404(id)
     db.session.delete(post)
     db.session.commit()
-    flash('Imefutwa!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_book/<int:id>', methods=['POST'])
@@ -327,7 +320,6 @@ def delete_book(id):
     book = Book.query.get_or_404(id)
     db.session.delete(book)
     db.session.commit()
-    flash('Imefutwa!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_video/<int:id>', methods=['POST'])
@@ -336,7 +328,6 @@ def delete_video(id):
     video = Video.query.get_or_404(id)
     db.session.delete(video)
     db.session.commit()
-    flash('Imefutwa!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin_logout')
@@ -345,7 +336,7 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- DB INIT (Hii inajenga database upya ikifutika) ---
+# --- DB INIT & ADMIN CREATION (SAFE) ---
 with app.app_context():
     try:
         db.create_all()
@@ -360,7 +351,7 @@ with app.app_context():
             db.session.add(About())
             db.session.commit()
     except Exception as e:
-        print(f"DB Error during Init: {e}")
+        print(f"DB Init Error: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)
