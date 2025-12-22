@@ -1,7 +1,6 @@
 import os
-import sys
 from datetime import datetime
-from flask import Flask, render_template, url_for, flash, redirect, request, send_from_directory
+from flask import Flask, render_template, url_for, flash, redirect, request, send_from_directory, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user, login_required
 from passlib.hash import sha256_crypt 
@@ -35,22 +34,20 @@ login_manager.login_view = 'admin_login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- HELPER: SAVE FILE (Yenye Ripoti ya Makosa) ---
+# --- HELPER: UPLOAD ---
 def save_file(file_storage):
-    """ Jaribu ku-upload. Ikishindikana, rudisha None na print error. """
     if not file_storage or file_storage.filename == '':
         return None
     
     if os.environ.get('CLOUDINARY_URL'):
         try:
+            # Upload to Cloudinary (Auto detect type)
             upload_result = cloudinary.uploader.upload(file_storage, resource_type="auto")
             return upload_result['secure_url'] 
         except Exception as e:
-            # Hapa tunadaka kosa la Cloudinary (kama API key mbovu)
-            print(f">>> CLOUDINARY ERROR: {e}", file=sys.stderr)
+            print(f"Cloudinary Error: {e}")
             return None
     else:
-        # Local Backup
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.makedirs(app.config['UPLOAD_FOLDER'])
         filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + file_storage.filename
@@ -97,6 +94,11 @@ class About(db.Model):
     vision = db.Column(db.Text, nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
+# MPYA: Visitor Counter (Analytics)
+class Visitor(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    count = db.Column(db.Integer, default=0)
+
 @app.context_processor
 def inject_global_vars():
     try:
@@ -109,6 +111,17 @@ def inject_global_vars():
 
 @app.route("/")
 def home():
+    # Analytics Logic: Ongeza count kila mtu anapofungua Home
+    try:
+        visitor = Visitor.query.first()
+        if not visitor:
+            visitor = Visitor(count=0)
+            db.session.add(visitor)
+        visitor.count += 1
+        db.session.commit()
+    except:
+        pass # Ignore analytics error to keep site running
+
     try:
         carousel_posts = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
         latest_posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
@@ -152,6 +165,12 @@ def library():
         books = []
     return render_template('library.html', title='Maktaba', books=books)
 
+# MPYA: Read Book Route (Badala ya Download)
+@app.route("/read/<int:book_id>")
+def read_book(book_id):
+    book = Book.query.get_or_404(book_id)
+    return render_template('read_book.html', title=book.title, book=book)
+
 @app.route("/posts")
 def posts():
     try:
@@ -171,6 +190,7 @@ def view_post(post_id):
 
 @app.route('/download/<path:filename>')
 def download_book(filename):
+    # Hii inatumika tu na system kuonyesha picha, sio kupakua vitabu tena
     if filename and (filename.startswith('http://') or filename.startswith('https://')):
         return redirect(filename)
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -201,15 +221,24 @@ def admin_dashboard():
         total_posts = Post.query.count()
         try: total_videos = Video.query.count()
         except: total_videos = 0
+        
+        # Pata Analytics
+        try:
+            visitor = Visitor.query.first()
+            total_visitors = visitor.count if visitor else 0
+        except:
+            total_visitors = 0
+
         all_books = Book.query.order_by(Book.date_uploaded.desc()).all()
         all_posts = Post.query.order_by(Post.date_posted.desc()).all()
         try: all_videos = Video.query.order_by(Video.date_uploaded.desc()).all()
         except: all_videos = []
     except:
-        total_books = 0; total_posts = 0; total_videos = 0
+        total_books = 0; total_posts = 0; total_videos = 0; total_visitors = 0
         all_books = []; all_posts = []; all_videos = []
+        
     return render_template('dashboard.html', 
-                           total_books=total_books, total_posts=total_posts, total_videos=total_videos,
+                           total_books=total_books, total_posts=total_posts, total_videos=total_videos, total_visitors=total_visitors,
                            books=all_books, posts=all_posts, videos=all_videos)
 
 @app.route('/admin/add_post', methods=['GET', 'POST'])
@@ -220,18 +249,11 @@ def add_post():
         content = request.form.get('content')
         is_carousel = request.form.get('is_carousel') == 'on'
         
-        # Pata Picha
         image_url = save_file(request.files.get('image_file'))
         
-        # KAMA UPLOAD IMEFELI (image_url ni None), TUNAMJUZA ADMIN
-        if request.files.get('image_file') and request.files.get('image_file').filename != '' and image_url is None:
-            flash('Kosa: Picha haikupakiwa. Angalia Cloudinary Settings kwenye Render.', 'danger')
-            return redirect(url_for('add_post'))
-
         new_post = Post(title=title, content=content, image_file=image_url, is_carousel=is_carousel)
         db.session.add(new_post)
         db.session.commit()
-        flash('Post imehifadhiwa kikamilifu!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('add_post.html')
 
@@ -250,10 +272,7 @@ def add_book():
             new_book = Book(title=title, author=author, description=description, category=category, file_path=file_url)
             db.session.add(new_book)
             db.session.commit()
-            flash('Kitabu kimepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
-        else:
-            flash('Kosa: Faili halikupakiwa (Angalia Cloudinary)', 'danger')
     return render_template('add_book.html')
 
 @app.route('/admin/add_video', methods=['GET', 'POST'])
@@ -268,10 +287,7 @@ def add_video():
             new_video = Video(title=title, description=description, video_file=file_url)
             db.session.add(new_video)
             db.session.commit()
-            flash('Video imepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
-        else:
-            flash('Kosa: Video haikupakiwa (Angalia Cloudinary)', 'danger')
     return render_template('add_video.html')
 
 @app.route('/admin/edit_about', methods=['GET', 'POST'])
@@ -292,17 +308,11 @@ def edit_about():
         about_info.mission = request.form.get('mission')
         about_info.vision = request.form.get('vision')
         
-        # Picha ya Founder
-        if request.files.get('founder_image') and request.files.get('founder_image').filename != '':
-            new_image = save_file(request.files.get('founder_image'))
-            if new_image:
-                about_info.founder_image = new_image
-            else:
-                flash('Kosa: Picha ya Founder haikupakiwa. Cloudinary Error.', 'danger')
-                return redirect(url_for('edit_about'))
+        new_image = save_file(request.files.get('founder_image'))
+        if new_image:
+            about_info.founder_image = new_image
             
         db.session.commit()
-        flash('Taarifa zimesasishwa!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('edit_about.html', about_info=about_info)
 
@@ -312,7 +322,6 @@ def delete_post(id):
     post = Post.query.get_or_404(id)
     db.session.delete(post)
     db.session.commit()
-    flash('Imefutwa!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_book/<int:id>', methods=['POST'])
@@ -321,7 +330,6 @@ def delete_book(id):
     book = Book.query.get_or_404(id)
     db.session.delete(book)
     db.session.commit()
-    flash('Imefutwa!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_video/<int:id>', methods=['POST'])
@@ -330,7 +338,6 @@ def delete_video(id):
     video = Video.query.get_or_404(id)
     db.session.delete(video)
     db.session.commit()
-    flash('Imefutwa!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin_logout')
@@ -350,6 +357,10 @@ with app.app_context():
             db.session.commit()
         if not About.query.first():
             db.session.add(About())
+            db.session.commit()
+        # Init Visitor Counter
+        if not Visitor.query.first():
+            db.session.add(Visitor(count=0))
             db.session.commit()
     except Exception as e:
         print(f"DB Init Error: {e}")
