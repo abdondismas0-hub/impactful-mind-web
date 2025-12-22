@@ -7,57 +7,44 @@ from passlib.hash import sha256_crypt
 from sqlalchemy import or_
 import cloudinary
 import cloudinary.uploader
-import cloudinary.api
 
-# --- CONFIGURATION ---
 app = Flask(__name__)
 
-# 1. DATABASE SETUP (Render PostgreSQL vs Local SQLite)
+# --- CONFIGURATION ---
+# Database Logic (PostgreSQL/SQLite Switch)
 database_url = os.environ.get('DATABASE_URL')
-
 if database_url and database_url.startswith("postgres://"):
-    # Fix kwa ajili ya Render (postgres -> postgresql)
     database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
-    # Local Fallback
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     DB_PATH = os.path.join(BASE_DIR, 'database.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'impactful_mind_safe_key_2025')
+app.config['SECRET_KEY'] = 'impactful_mind_master_key_2025' 
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
-
-# 2. CLOUDINARY CONFIG (Inasoma Environment Variable 'CLOUDINARY_URL')
-# Hakikisha umeweka CLOUDINARY_URL kule Render
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'admin_login'
-login_manager.login_message_category = 'info'
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- HELPER: SAVE FILE (Inapeleka Cloudinary) ---
+# --- HELPER: SAVE FILE ---
 def save_file(file_storage):
-    """ Hifadhi faili Cloudinary (Lisifutike). """
     if not file_storage or file_storage.filename == '':
         return None
-    
-    # Angalia kama CLOUDINARY ipo (Render)
     if os.environ.get('CLOUDINARY_URL'):
         try:
-            # Upload Cloudinary
             upload_result = cloudinary.uploader.upload(file_storage, resource_type="auto")
             return upload_result['secure_url'] 
         except Exception as e:
             print(f"Cloudinary Error: {e}")
             return None
     else:
-        # Local Backup
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.makedirs(app.config['UPLOAD_FOLDER'])
         filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + file_storage.filename
@@ -104,7 +91,7 @@ class About(db.Model):
     vision = db.Column(db.Text, nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
-# --- CONTEXT PROCESSOR ---
+# --- CONTEXT PROCESSOR (SAFE) ---
 @app.context_processor
 def inject_global_vars():
     try:
@@ -113,26 +100,47 @@ def inject_global_vars():
         about_info = None
     return dict(about_info=about_info)
 
+# --- REQUEST HOOK: LAZIMISHA DB CREATE ---
+# Hii ndiyo sehemu inayotibu 500 Error kwa kulazimisha kuunda jedwali
+@app.before_first_request
+def create_tables():
+    db.create_all()
+    # Hakikisha Admin na About vipo
+    if not User.query.filter_by(username='admin').first():
+        hashed_pw = sha256_crypt.hash("adminpass")
+        user = User(username='admin', password=hashed_pw, is_admin=True)
+        db.session.add(user)
+        db.session.commit()
+    if not About.query.first():
+        db.session.add(About())
+        db.session.commit()
+
 # --- ROUTES ---
 
 @app.route("/")
 def home():
     try:
-        carousel_posts = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
-        latest_posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
-        latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
-        # Handle Video safely
+        # Tunatumia utaratibu wa "Fail-Safe". Ikigoma kusoma, inarudisha list tupu badala ya 500 error.
+        try:
+            carousel_posts = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
+        except: carousel_posts = []
+        
+        try:
+            latest_posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
+        except: latest_posts = []
+        
+        try:
+            latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
+        except: latest_books = []
+        
         try:
             videos = Video.query.order_by(Video.date_uploaded.desc()).limit(2).all()
-        except:
-            videos = []
+        except: videos = []
+            
         about_info = About.query.first()
-    except:
-        carousel_posts = []
-        latest_posts = []
-        latest_books = []
-        videos = []
-        about_info = None
+    except Exception as e:
+        print(f"Home Error: {e}")
+        return render_template('index.html', title='Nyumbani', carousel_posts=[], posts=[], books=[], videos=[], about_info=None)
         
     return render_template('index.html', title='Nyumbani', 
                            carousel_posts=carousel_posts, posts=latest_posts, 
@@ -141,32 +149,25 @@ def home():
 @app.route("/search")
 def search():
     query = request.args.get('q')
+    posts = []
+    books = []
     if query:
         try:
             posts = Post.query.filter(or_(Post.title.ilike(f'%{query}%'), Post.content.ilike(f'%{query}%'))).all()
             books = Book.query.filter(or_(Book.title.ilike(f'%{query}%'), Book.author.ilike(f'%{query}%'))).all()
-        except:
-            posts = []
-            books = []
-    else:
-        posts = []
-        books = []
+        except: pass
     return render_template('search.html', title='Matokeo', posts=posts, books=books, query=query)
 
 @app.route("/library")
 def library():
-    try:
-        books = Book.query.all()
-    except:
-        books = []
+    try: books = Book.query.all()
+    except: books = []
     return render_template('library.html', title='Maktaba', books=books)
 
 @app.route("/posts")
 def posts():
-    try:
-        posts = Post.query.all()
-    except:
-        posts = []
+    try: posts = Post.query.all()
+    except: posts = []
     return render_template('posts.html', title='Daily Posts', posts=posts)
 
 @app.route("/contact")
@@ -180,7 +181,6 @@ def view_post(post_id):
 
 @app.route('/download/<path:filename>')
 def download_book(filename):
-    # Smart redirect for Cloudinary URLs
     if filename and (filename.startswith('http://') or filename.startswith('https://')):
         return redirect(filename)
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -209,23 +209,17 @@ def admin_dashboard():
     try:
         total_books = Book.query.count()
         total_posts = Post.query.count()
-        # Handle Video table check
-        try:
-            total_videos = Video.query.count()
-            all_videos = Video.query.order_by(Video.date_uploaded.desc()).all()
-        except:
-            total_videos = 0
-            all_videos = []
-            
+        try: total_videos = Video.query.count()
+        except: total_videos = 0
+        
         all_books = Book.query.order_by(Book.date_uploaded.desc()).all()
         all_posts = Post.query.order_by(Post.date_posted.desc()).all()
+        try: all_videos = Video.query.order_by(Video.date_uploaded.desc()).all()
+        except: all_videos = []
     except:
-        total_books = 0
-        total_posts = 0
-        total_videos = 0
-        all_books = []
-        all_posts = []
-        all_videos = []
+        total_books = 0; total_posts = 0; total_videos = 0
+        all_books = []; all_posts = []; all_videos = []
+        
     return render_template('dashboard.html', 
                            total_books=total_books, total_posts=total_posts, total_videos=total_videos,
                            books=all_books, posts=all_posts, videos=all_videos)
@@ -237,9 +231,7 @@ def add_post():
         title = request.form.get('title')
         content = request.form.get('content')
         is_carousel = request.form.get('is_carousel') == 'on'
-        
         image_url = save_file(request.files.get('image_file'))
-        
         new_post = Post(title=title, content=content, image_file=image_url, is_carousel=is_carousel)
         db.session.add(new_post)
         db.session.commit()
@@ -254,9 +246,7 @@ def add_book():
         author = request.form.get('author')
         description = request.form.get('description')
         category = request.form.get('category')
-        
         file_url = save_file(request.files.get('pdf_file'))
-        
         if file_url:
             new_book = Book(title=title, author=author, description=description, category=category, file_path=file_url)
             db.session.add(new_book)
@@ -270,9 +260,7 @@ def add_video():
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
-        
         file_url = save_file(request.files.get('video_file'))
-        
         if file_url:
             new_video = Video(title=title, description=description, video_file=file_url)
             db.session.add(new_video)
@@ -291,17 +279,14 @@ def edit_about():
             db.session.commit()
     except:
         return "DB Error"
-        
     if request.method == 'POST':
         about_info.founder_name = request.form.get('founder_name')
         about_info.founder_bio = request.form.get('founder_bio')
         about_info.mission = request.form.get('mission')
         about_info.vision = request.form.get('vision')
-        
         new_image = save_file(request.files.get('founder_image'))
         if new_image:
             about_info.founder_image = new_image
-            
         db.session.commit()
         return redirect(url_for('admin_dashboard'))
     return render_template('edit_about.html', about_info=about_info)
@@ -336,22 +321,8 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- DB INIT & ADMIN CREATION (SAFE) ---
-with app.app_context():
-    try:
-        db.create_all()
-        # Create Admin
-        if not User.query.filter_by(username='admin').first():
-            hashed_pw = sha256_crypt.hash("adminpass")
-            user = User(username='admin', password=hashed_pw, is_admin=True)
-            db.session.add(user)
-            db.session.commit()
-        # Create About Info
-        if not About.query.first():
-            db.session.add(About())
-            db.session.commit()
-    except Exception as e:
-        print(f"DB Init Error: {e}")
-
 if __name__ == '__main__':
+    with app.app_context():
+        try: db.create_all()
+        except: pass
     app.run(debug=True)
