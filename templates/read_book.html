@@ -1,29 +1,215 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="padding-top: 30px; height: 90vh; display: flex; flex-direction: column;">
+<!-- PDF.js Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+
+<style>
+    /* Muundo wa Reader */
+    #pdf-wrapper {
+        width: 100%;
+        max-width: 900px;
+        margin: 20px auto;
+        background: #333;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        text-align: center;
+    }
+    
+    #the-canvas {
+        direction: ltr;
+        width: 100%;
+        height: auto;
+        border: 1px solid #000;
+        background-color: white;
+    }
+
+    .controls {
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 8px;
+    }
+
+    .page-info {
+        color: white;
+        font-weight: bold;
+    }
+
+    .btn-nav {
+        background-color: var(--accent);
+        color: black;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .btn-nav:disabled {
+        background-color: #555;
+        color: #888;
+        cursor: not-allowed;
+    }
+    
+    .loading-msg {
+        color: var(--accent);
+        font-size: 1.2rem;
+        margin: 20px;
+    }
+</style>
+
+<div style="padding-top: 30px;">
     
     <!-- Header -->
-    <div class="glass-panel" style="padding: 15px 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+    <div class="glass-panel" style="max-width: 900px; margin: 0 auto 20px auto; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
         <h2 style="color: var(--accent); margin: 0; font-size: 1.2rem;">{{ book.title }}</h2>
         <a href="{{ url_for('library') }}" class="btn" style="background: transparent; border: 1px solid white; padding: 5px 15px; font-size: 0.9rem; color: white;">
             <i class="fas fa-times"></i> Funga
         </a>
     </div>
 
-    <!-- PDF VIEWER (Direct Embed) -->
-    <div class="pdf-viewer-box">
-        <!-- Tunatumia link ya Cloudinary moja kwa moja -->
-        <embed src="{{ book.file_path }}" type="application/pdf" width="100%" height="100%" />
+    <!-- PDF Viewer Container -->
+    <div id="pdf-wrapper">
         
-        <!-- Ujumbe wa dharura kama simu haiwezi ku-embed -->
-        <div style="position: absolute; z-index: -1; text-align: center; width: 100%; top: 50%;">
-            <p>Inapakia PDF...</p>
-            <a href="{{ book.file_path }}" target="_blank" class="btn">Bofya hapa kusoma</a>
+        <div class="controls">
+            <button class="btn-nav" id="prev" onclick="onPrevPage()">❮ Nyuma</button>
+            <span class="page-info">Ukurasa: <span id="page_num"></span> / <span id="page_count"></span></span>
+            <button class="btn-nav" id="next" onclick="onNextPage()">Mbele ❯</button>
         </div>
+
+        <div id="loader" class="loading-msg">Inapakia Kitabu... Tafadhali subiri.</div>
+        <canvas id="the-canvas"></canvas>
+        
+    </div>
+
+    <!-- Fallback Link (Kama ikigoma kabisa) -->
+    <div style="text-align: center; margin-top: 20px;">
+        <p style="color: #888; font-size: 0.8rem;">
+            Kama huoni kitabu, <a href="{{ book.file_path }}" target="_blank" style="color: var(--accent);">Bofya Hapa</a> kukifungua kwa nje.
+        </p>
     </div>
 
 </div>
+
+<script>
+    // URL ya PDF kutoka Database/Cloudinary
+    var url = '{{ book.file_path }}';
+
+    // Set up PDF.js
+    var pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+
+    var pdfDoc = null,
+        pageNum = 1,
+        pageRendering = false,
+        pageNumPending = null,
+        scale = 1.5, // Ukubwa wa maandishi (Zoom)
+        canvas = document.getElementById('the-canvas'),
+        ctx = canvas.getContext('2d');
+
+    /**
+     * Get page info from document, resize canvas accordingly, and render page.
+     */
+    function renderPage(num) {
+        pageRendering = true;
+        
+        // Fetch page
+        pdfDoc.getPage(num).then(function(page) {
+            var viewport = page.getViewport({scale: scale});
+            
+            // Fanya iwe responsive kwa simu
+            var wrapperWidth = document.getElementById('pdf-wrapper').clientWidth;
+            var newScale = (wrapperWidth - 20) / viewport.width; 
+            
+            // Tumia scale kubwa kidogo kama ni simu ili maandishi yasomeke
+            if(window.innerWidth < 768) {
+                 viewport = page.getViewport({scale: 0.6}); // Ndogo kwa simu ili isitoke nje
+                 // Au tunaweza kuacha responsive logic ya juu
+                 var responsiveViewport = page.getViewport({scale: scale * (wrapperWidth / viewport.width)});
+                 viewport = responsiveViewport;
+            }
+
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            // Render PDF page into canvas context
+            var renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+            var renderTask = page.render(renderContext);
+
+            // Wait for render to finish
+            renderTask.promise.then(function() {
+                pageRendering = false;
+                document.getElementById('loader').style.display = 'none'; // Ficha loading
+                if (pageNumPending !== null) {
+                    renderPage(pageNumPending);
+                    pageNumPending = null;
+                }
+            });
+        });
+
+        // Update page counters
+        document.getElementById('page_num').textContent = num;
+        
+        // Update buttons state
+        document.getElementById('prev').disabled = num <= 1;
+        document.getElementById('next').disabled = num >= pdfDoc.numPages;
+    }
+
+    /**
+     * If another page rendering in progress, waits until the rendering is
+     * finised. Otherwise, executes rendering immediately.
+     */
+    function queueRenderPage(num) {
+        if (pageRendering) {
+            pageNumPending = num;
+        } else {
+            renderPage(num);
+        }
+    }
+
+    /**
+     * Displays previous page.
+     */
+    function onPrevPage() {
+        if (pageNum <= 1) {
+            return;
+        }
+        pageNum--;
+        queueRenderPage(pageNum);
+    }
+
+    /**
+     * Displays next page.
+     */
+    function onNextPage() {
+        if (pageNum >= pdfDoc.numPages) {
+            return;
+        }
+        pageNum++;
+        queueRenderPage(pageNum);
+    }
+
+    /**
+     * Asynchronously downloads PDF.
+     */
+    pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
+        pdfDoc = pdfDoc_;
+        document.getElementById('page_count').textContent = pdfDoc.numPages;
+
+        // Initial/first page rendering
+        renderPage(pageNum);
+    }).catch(function(error) {
+        console.error('Error loading PDF:', error);
+        document.getElementById('loader').innerHTML = 'Imeshindikana kupakia PDF. <br> <a href="' + url + '" target="_blank" style="color:#f1c40f">Fungua Hapa</a>';
+    });
+</script>
 {% endblock %}
 
 
