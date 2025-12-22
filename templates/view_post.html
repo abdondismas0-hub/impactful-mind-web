@@ -1,29 +1,34 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="post-detail-container">
+<div class="post-detail-container" style="max-width: 900px; margin: 30px auto;">
     
-    <div class="glass-panel" style="padding: 30px;">
-        <!-- Picha ya Post (Imeboreshwa CSS) -->
+    <div class="glass-panel" style="padding: 0; overflow: hidden; background: rgba(12, 20, 34, 0.9);">
+        
+        <!-- Picha ya Post (Imeboreshwa) -->
         {% if post.image_file %}
-        <div style="text-align: center;">
-            <img src="{{ url_for('download_book', filename=post.image_file) }}" class="post-banner-img" alt="{{ post.title }}">
+        <div class="post-banner-box" style="width: 100%; text-align: center; background: #000; padding: 10px;">
+            <!-- LOGIC MPYA -->
+            {% set img_src = post.image_file if 'http' in post.image_file else url_for('download_book', filename=post.image_file) %}
+            <img src="{{ img_src }}" style="max-width: 100%; max-height: 500px; object-fit: contain;" alt="{{ post.title }}">
         </div>
         {% endif %}
 
-        <h1 style="color: var(--accent); font-size: 2.5rem; margin-top: 0; line-height: 1.3;">{{ post.title }}</h1>
-        
-        <p style="color: #aaa; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 30px;">
-            <i class="far fa-calendar-alt"></i> Imechapishwa: {{ post.date_posted.strftime('%d %B %Y') }}
-        </p>
-        
-        <div style="line-height: 2; font-size: 1.15rem; color: #e0e0e0; white-space: pre-wrap;">
-            {{ post.content }}
-        </div>
+        <div style="padding: 40px;">
+            <h1 style="color: var(--accent); font-size: 2.5rem; margin-top: 0; line-height: 1.3;">{{ post.title }}</h1>
+            
+            <p style="color: #aaa; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 30px;">
+                <i class="far fa-calendar-alt"></i> Imechapishwa: {{ post.date_posted.strftime('%d %B %Y') }}
+            </p>
+            
+            <div style="line-height: 2; font-size: 1.15rem; color: #e0e0e0; white-space: pre-wrap;">
+                {{ post.content }}
+            </div>
 
-        <br><br>
-        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-            <a href="{{ url_for('posts') }}" class="btn" style="background: transparent; border: 1px solid var(--accent); color: var(--accent);">&larr; Rudi kwenye Posts</a>
+            <br><br>
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <a href="{{ url_for('posts') }}" class="btn" style="background: transparent; border: 1px solid var(--accent); color: var(--accent);">&larr; Rudi kwenye Posts</a>
+            </div>
         </div>
     </div>
 
