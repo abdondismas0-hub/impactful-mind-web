@@ -4,7 +4,7 @@
 <div style="padding-top: 20px;">
     <div class="glass-panel" style="text-align: center; margin-bottom: 40px;">
         <h1 style="color: var(--accent); font-size: 2.5rem;">Maktaba ya Vitabu</h1>
-        <p style="color: #ccc;">Pakua na soma vitabu vilivyoteuliwa kwa ajili yako.</p>
+        <p style="color: #ccc;">Soma vitabu mtandaoni bure.</p>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
@@ -19,10 +19,10 @@
             
             <h3 style="color: #fff; margin-bottom: 5px;">{{ book.title }}</h3>
             <p style="color: #aaa; font-size: 0.9rem; margin-bottom: 15px;">By {{ book.author }}</p>
-            <p style="color: #ddd; font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px;">{{ book.description[:100] }}...</p>
             
-            <a href="{{ url_for('download_book', filename=book.file_path) }}" class="btn" style="width: 100%; text-align: center; background-color: #3498db;">
-                <i class="fas fa-download"></i> Pakua PDF
+            <!-- BUTTON IMEBADILISHWA: SOMA (READ) -->
+            <a href="{{ url_for('read_book', book_id=book.id) }}" class="btn" style="width: 100%; text-align: center; background-color: #3498db;">
+                <i class="fas fa-book-open"></i> Soma Sasa
             </a>
         </div>
         {% else %}
@@ -33,4 +33,5 @@
     </div>
 </div>
 {% endblock %}
+
 
