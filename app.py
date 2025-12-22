@@ -7,11 +7,12 @@ from passlib.hash import sha256_crypt
 from sqlalchemy import or_
 import cloudinary
 import cloudinary.uploader
-
-app = Flask(__name__)
+import cloudinary.api
 
 # --- CONFIGURATION ---
-# Database Logic (PostgreSQL/SQLite Switch)
+app = Flask(__name__)
+
+# Database Logic
 database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
@@ -37,6 +38,7 @@ def load_user(user_id):
 def save_file(file_storage):
     if not file_storage or file_storage.filename == '':
         return None
+    
     if os.environ.get('CLOUDINARY_URL'):
         try:
             upload_result = cloudinary.uploader.upload(file_storage, resource_type="auto")
@@ -91,7 +93,6 @@ class About(db.Model):
     vision = db.Column(db.Text, nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
-# --- CONTEXT PROCESSOR (SAFE) ---
 @app.context_processor
 def inject_global_vars():
     try:
@@ -100,47 +101,25 @@ def inject_global_vars():
         about_info = None
     return dict(about_info=about_info)
 
-# --- REQUEST HOOK: LAZIMISHA DB CREATE ---
-# Hii ndiyo sehemu inayotibu 500 Error kwa kulazimisha kuunda jedwali
-@app.before_first_request
-def create_tables():
-    db.create_all()
-    # Hakikisha Admin na About vipo
-    if not User.query.filter_by(username='admin').first():
-        hashed_pw = sha256_crypt.hash("adminpass")
-        user = User(username='admin', password=hashed_pw, is_admin=True)
-        db.session.add(user)
-        db.session.commit()
-    if not About.query.first():
-        db.session.add(About())
-        db.session.commit()
-
 # --- ROUTES ---
 
 @app.route("/")
 def home():
     try:
-        # Tunatumia utaratibu wa "Fail-Safe". Ikigoma kusoma, inarudisha list tupu badala ya 500 error.
-        try:
-            carousel_posts = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
-        except: carousel_posts = []
-        
-        try:
-            latest_posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
-        except: latest_posts = []
-        
-        try:
-            latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
-        except: latest_books = []
-        
+        carousel_posts = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
+        latest_posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
+        latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
         try:
             videos = Video.query.order_by(Video.date_uploaded.desc()).limit(2).all()
-        except: videos = []
-            
+        except:
+            videos = []
         about_info = About.query.first()
-    except Exception as e:
-        print(f"Home Error: {e}")
-        return render_template('index.html', title='Nyumbani', carousel_posts=[], posts=[], books=[], videos=[], about_info=None)
+    except:
+        carousel_posts = []
+        latest_posts = []
+        latest_books = []
+        videos = []
+        about_info = None
         
     return render_template('index.html', title='Nyumbani', 
                            carousel_posts=carousel_posts, posts=latest_posts, 
@@ -149,25 +128,28 @@ def home():
 @app.route("/search")
 def search():
     query = request.args.get('q')
-    posts = []
-    books = []
     if query:
-        try:
-            posts = Post.query.filter(or_(Post.title.ilike(f'%{query}%'), Post.content.ilike(f'%{query}%'))).all()
-            books = Book.query.filter(or_(Book.title.ilike(f'%{query}%'), Book.author.ilike(f'%{query}%'))).all()
-        except: pass
+        posts = Post.query.filter(or_(Post.title.ilike(f'%{query}%'), Post.content.ilike(f'%{query}%'))).all()
+        books = Book.query.filter(or_(Book.title.ilike(f'%{query}%'), Book.author.ilike(f'%{query}%'))).all()
+    else:
+        posts = []
+        books = []
     return render_template('search.html', title='Matokeo', posts=posts, books=books, query=query)
 
 @app.route("/library")
 def library():
-    try: books = Book.query.all()
-    except: books = []
+    try:
+        books = Book.query.all()
+    except:
+        books = []
     return render_template('library.html', title='Maktaba', books=books)
 
 @app.route("/posts")
 def posts():
-    try: posts = Post.query.all()
-    except: posts = []
+    try:
+        posts = Post.query.all()
+    except:
+        posts = []
     return render_template('posts.html', title='Daily Posts', posts=posts)
 
 @app.route("/contact")
@@ -211,7 +193,6 @@ def admin_dashboard():
         total_posts = Post.query.count()
         try: total_videos = Video.query.count()
         except: total_videos = 0
-        
         all_books = Book.query.order_by(Book.date_uploaded.desc()).all()
         all_posts = Post.query.order_by(Post.date_posted.desc()).all()
         try: all_videos = Video.query.order_by(Video.date_uploaded.desc()).all()
@@ -321,8 +302,19 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
+with app.app_context():
+    try:
+        db.create_all()
+        if not User.query.filter_by(username='admin').first():
+            hashed_pw = sha256_crypt.hash("adminpass")
+            user = User(username='admin', password=hashed_pw, is_admin=True)
+            db.session.add(user)
+            db.session.commit()
+        if not About.query.first():
+            db.session.add(About())
+            db.session.commit()
+    except:
+        pass
+
 if __name__ == '__main__':
-    with app.app_context():
-        try: db.create_all()
-        except: pass
     app.run(debug=True)
