@@ -12,9 +12,11 @@
         <div class="glass-panel" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
             
             <!-- Picha imeboreshwa hapa (post-card-img class) -->
-            <div class="post-card-img">
+            <div class="post-card-img" style="height: 250px; background: #000; overflow: hidden;">
                 {% if post.image_file %}
-                    <img src="{{ url_for('download_book', filename=post.image_file) }}" alt="{{ post.title }}">
+                    <!-- LOGIC MPYA -->
+                    {% set img_src = post.image_file if 'http' in post.image_file else url_for('download_book', filename=post.image_file) %}
+                    <img src="{{ img_src }}" alt="{{ post.title }}" style="width: 100%; height: 100%; object-fit: cover;">
                 {% else %}
                     <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #2c3e50, #4ca1af); display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-newspaper fa-3x" style="color: rgba(255,255,255,0.3);"></i>
