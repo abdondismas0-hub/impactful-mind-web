@@ -1,51 +1,43 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="padding-top: 20px; height: 100vh; display: flex; flex-direction: column;">
+<div style="padding-top: 40px; max-width: 800px; margin: auto;">
     
-    <!-- Header -->
-    <div class="glass-panel" style="padding: 10px 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
-        <h2 style="color: var(--accent); margin: 0; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70%;">
-            {{ book.title }}
-        </h2>
-        <a href="{{ url_for('library') }}" class="btn" style="background: transparent; border: 1px solid white; padding: 5px 15px; font-size: 0.8rem; color: white;">
-            Funga
-        </a>
-    </div>
-
-    <!-- PDF CONTAINER -->
-    <div class="glass-panel" style="padding: 0; overflow: hidden; flex-grow: 1; background: #fff; border-radius: 10px; position: relative;">
+    <div class="glass-panel" style="text-align: center; padding: 50px 30px;">
         
-        <!-- NJIA 1: IFRAME (Kwa Kompyuta na Simu Kubwa) -->
-        <!-- Tunatumia link ya faili moja kwa moja -->
-        <iframe src="{{ book.file_path }}" width="100%" height="100%" style="border: none;">
+        <!-- Icon ya Kitabu -->
+        <div style="width: 100px; height: 140px; background: #2c3e50; margin: 0 auto 30px auto; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid var(--accent);">
+            <i class="fas fa-book fa-4x" style="color: #fff;"></i>
+        </div>
+
+        <!-- Kichwa na Mwandishi -->
+        <h1 style="color: var(--accent); font-size: 2.5rem; margin-bottom: 10px;">{{ book.title }}</h1>
+        <p style="color: #aaa; font-size: 1.2rem; margin-bottom: 30px;">Mwandishi: <span style="color: white;">{{ book.author }}</span></p>
+
+        <!-- Maelezo ya Kitabu -->
+        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; text-align: left; margin-bottom: 40px;">
+            <h4 style="color: #3498db; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px;">Kuhusu Kitabu Hiki:</h4>
+            <p style="color: #ddd; line-height: 1.8;">{{ book.description }}</p>
+        </div>
+
+        <!-- VITUFE VYA KUSOMA (SULUHISHO) -->
+        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
             
-            <!-- NJIA 2: UJUMBE KAMA IFRAME IMEGOMA (Kwa Simu Ndogo) -->
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0c1422; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
-                <i class="fas fa-book-reader fa-4x" style="color: var(--accent); margin-bottom: 20px;"></i>
-                <h3 style="color: white; margin-bottom: 10px;">Simu hii haiwezi kupachika PDF</h3>
-                <p style="color: #ccc; margin-bottom: 30px;">Lakini unaweza kusoma kwa kubofya hapa chini.</p>
-                
-                <!-- Hii Link inafungua PDF kwenye tab mpya (Sio kudownload) -->
-                <a href="{{ book.file_path }}" target="_blank" class="btn" style="padding: 15px 40px; font-size: 1.2rem;">
-                    Soma Kitabu Hapa
-                </a>
-            </div>
+            <!-- 1. Kitufe cha Kurudi -->
+            <a href="{{ url_for('library') }}" class="btn" style="background: transparent; border: 1px solid #aaa; color: #aaa;">
+                <i class="fas fa-arrow-left"></i> Rudi Maktaba
+            </a>
 
-        </iframe>
+            <!-- 2. Kitufe cha KUSOMA (Kinafunguka New Tab - Hakigomi!) -->
+            <a href="{{ book.file_path }}" target="_blank" class="btn" style="background-color: var(--success); color: white; padding: 12px 40px; font-size: 1.1rem; box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);">
+                <i class="fas fa-book-reader"></i> Soma Sasa (PDF)
+            </a>
+            
+        </div>
 
-    </div>
-    
-    <div style="text-align: center; padding: 10px; color: #888; font-size: 0.8rem;">
-        &copy; Impactful Mind Library
     </div>
 
 </div>
-
-<!-- Zuia Right Click (Kupunguza wizi wa kazi) -->
-<script>
-    document.addEventListener('contextmenu', event => event.preventDefault());
-</script>
 {% endblock %}
 
 
