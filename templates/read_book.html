@@ -20,7 +20,7 @@
             <p style="color: #ddd; line-height: 1.8;">{{ book.description }}</p>
         </div>
 
-        <!-- VITUFE VYA KUSOMA (SULUHISHO) -->
+        <!-- VITUFE VYA KUSOMA -->
         <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
             
             <!-- 1. Kitufe cha Kurudi -->
@@ -28,10 +28,17 @@
                 <i class="fas fa-arrow-left"></i> Rudi Maktaba
             </a>
 
-            <!-- 2. Kitufe cha KUSOMA (Kinafunguka New Tab - Hakigomi!) -->
-            <a href="{{ book.file_path }}" target="_blank" class="btn" style="background-color: var(--success); color: white; padding: 12px 40px; font-size: 1.1rem; box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);">
-                <i class="fas fa-book-reader"></i> Soma Sasa (PDF)
-            </a>
+            <!-- 2. Kitufe cha KUSOMA (DIRECT LINK FIX) -->
+            <!-- Hapa tunatumia logic: Kama ni link ya mtandaoni, itumie moja kwa moja. Kama ni faili la ndani, tumia download_book -->
+            {% if 'http' in book.file_path %}
+                <a href="{{ book.file_path }}" target="_blank" class="btn" style="background-color: var(--success); color: white; padding: 12px 40px; font-size: 1.1rem; box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);">
+                    <i class="fas fa-book-reader"></i> Soma Sasa (PDF)
+                </a>
+            {% else %}
+                <a href="{{ url_for('download_book', filename=book.file_path) }}" target="_blank" class="btn" style="background-color: var(--success); color: white; padding: 12px 40px; font-size: 1.1rem;">
+                    <i class="fas fa-book-reader"></i> Soma Sasa (Local)
+                </a>
+            {% endif %}
             
         </div>
 
