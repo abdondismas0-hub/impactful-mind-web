@@ -1,5 +1,4 @@
 import os
-import sys
 from datetime import datetime
 from flask import Flask, render_template, url_for, flash, redirect, request, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
@@ -10,41 +9,26 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-# --- CONFIGURATION ---
 app = Flask(__name__)
 
-# --- DIAGNOSTIC DATABASE SETUP (HII NDIO SIRI) ---
-# Tunachunguza Environment Variables kuona kama PostgreSQL ipo
+# --- CONFIGURATION ---
+# Database Logic (PostgreSQL kwa Render, SQLite kwa Local)
 database_url = os.environ.get('DATABASE_URL')
-
-if database_url:
-    # Fix ya Render (postgres -> postgresql)
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
-    
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print(">>> STATUS: IMEUNGANISHWA NA POSTGRESQL (RENDER) - DATA SALAMA", file=sys.stderr)
 else:
-    # Fallback ya Local
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     DB_PATH = os.path.join(BASE_DIR, 'database.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
-    print(">>> STATUS: INATUMIA SQLITE (LOCAL) - DATA ZITAFUTIKA RENDER IKIRESTART", file=sys.stderr)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'impactful_mind_pro_key_2025' 
+app.config['SECRET_KEY'] = 'impactful_mind_master_key_2025' 
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
-
-# Cloudinary Check
-if not os.environ.get('CLOUDINARY_URL'):
-    print(">>> WARNING: CLOUDINARY_URL HAIPO. PICHA ZITAFUTIKA.", file=sys.stderr)
-else:
-    print(">>> STATUS: CLOUDINARY IMEUNGANISHWA.", file=sys.stderr)
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'admin_login'
-login_manager.login_message_category = 'info'
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -55,16 +39,14 @@ def save_file(file_storage):
     if not file_storage or file_storage.filename == '':
         return None
     
-    # Check Cloudinary
     if os.environ.get('CLOUDINARY_URL'):
         try:
             upload_result = cloudinary.uploader.upload(file_storage, resource_type="auto")
             return upload_result['secure_url'] 
         except Exception as e:
-            print(f">>> CLOUDINARY ERROR: {e}", file=sys.stderr)
+            print(f"Cloudinary Error: {e}")
             return None
     else:
-        # Local Fallback
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.makedirs(app.config['UPLOAD_FOLDER'])
         filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + file_storage.filename
@@ -111,11 +93,6 @@ class About(db.Model):
     vision = db.Column(db.Text, nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Analytics
-class Visitor(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    count = db.Column(db.Integer, default=0)
-
 @app.context_processor
 def inject_global_vars():
     try:
@@ -128,22 +105,14 @@ def inject_global_vars():
 
 @app.route("/")
 def home():
-    # Analytics
-    try:
-        visitor = Visitor.query.first()
-        if not visitor:
-            db.session.add(Visitor(count=1))
-        else:
-            visitor.count += 1
-        db.session.commit()
-    except: pass
-
     try:
         carousel_posts = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
         latest_posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
         latest_books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
-        try: videos = Video.query.order_by(Video.date_uploaded.desc()).limit(2).all()
-        except: videos = []
+        try:
+            videos = Video.query.order_by(Video.date_uploaded.desc()).limit(2).all()
+        except:
+            videos = []
         about_info = About.query.first()
     except:
         carousel_posts = []
@@ -173,14 +142,18 @@ def search():
 
 @app.route("/library")
 def library():
-    try: books = Book.query.all()
-    except: books = []
+    try:
+        books = Book.query.all()
+    except:
+        books = []
     return render_template('library.html', title='Maktaba', books=books)
 
 @app.route("/posts")
 def posts():
-    try: posts = Post.query.all()
-    except: posts = []
+    try:
+        posts = Post.query.all()
+    except:
+        posts = []
     return render_template('posts.html', title='Daily Posts', posts=posts)
 
 @app.route("/contact")
@@ -191,11 +164,6 @@ def contact():
 def view_post(post_id):
     post = Post.query.get_or_404(post_id)
     return render_template('view_post.html', title=post.title, post=post)
-
-@app.route('/read/<int:book_id>')
-def read_book(book_id):
-    book = Book.query.get_or_404(book_id)
-    return render_template('read_book.html', title=book.title, book=book)
 
 @app.route('/download/<path:filename>')
 def download_book(filename):
@@ -229,21 +197,15 @@ def admin_dashboard():
         total_posts = Post.query.count()
         try: total_videos = Video.query.count()
         except: total_videos = 0
-        try: 
-            v = Visitor.query.first()
-            total_visitors = v.count if v else 0
-        except: total_visitors = 0
-        
         all_books = Book.query.order_by(Book.date_uploaded.desc()).all()
         all_posts = Post.query.order_by(Post.date_posted.desc()).all()
         try: all_videos = Video.query.order_by(Video.date_uploaded.desc()).all()
         except: all_videos = []
     except:
-        total_books = 0; total_posts = 0; total_videos = 0; total_visitors = 0
+        total_books = 0; total_posts = 0; total_videos = 0
         all_books = []; all_posts = []; all_videos = []
-        
     return render_template('dashboard.html', 
-                           total_books=total_books, total_posts=total_posts, total_videos=total_videos, total_visitors=total_visitors,
+                           total_books=total_books, total_posts=total_posts, total_videos=total_videos,
                            books=all_books, posts=all_posts, videos=all_videos)
 
 @app.route('/admin/add_post', methods=['GET', 'POST'])
@@ -253,18 +215,11 @@ def add_post():
         title = request.form.get('title')
         content = request.form.get('content')
         is_carousel = request.form.get('is_carousel') == 'on'
-        
         image_url = save_file(request.files.get('image_file'))
         
-        # Check if upload failed
-        if request.files.get('image_file') and request.files.get('image_file').filename != '' and not image_url:
-            flash('Kosa: Picha haikupakiwa (Check Logs)', 'danger')
-            return redirect(url_for('add_post'))
-
         new_post = Post(title=title, content=content, image_file=image_url, is_carousel=is_carousel)
         db.session.add(new_post)
         db.session.commit()
-        flash('Post imehifadhiwa!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('add_post.html')
 
@@ -276,17 +231,13 @@ def add_book():
         author = request.form.get('author')
         description = request.form.get('description')
         category = request.form.get('category')
-        
         file_url = save_file(request.files.get('pdf_file'))
         
         if file_url:
             new_book = Book(title=title, author=author, description=description, category=category, file_path=file_url)
             db.session.add(new_book)
             db.session.commit()
-            flash('Kitabu kimepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
-        else:
-            flash('Kosa: PDF haikupakiwa', 'danger')
     return render_template('add_book.html')
 
 @app.route('/admin/add_video', methods=['GET', 'POST'])
@@ -301,10 +252,7 @@ def add_video():
             new_video = Video(title=title, description=description, video_file=file_url)
             db.session.add(new_video)
             db.session.commit()
-            flash('Video imepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
-        else:
-            flash('Kosa: Video haikupakiwa', 'danger')
     return render_template('add_video.html')
 
 @app.route('/admin/edit_about', methods=['GET', 'POST'])
@@ -330,44 +278,31 @@ def edit_about():
             about_info.founder_image = new_image
             
         db.session.commit()
-        flash('Taarifa zimesasishwa!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('edit_about.html', about_info=about_info)
 
 @app.route('/admin/delete_post/<int:id>', methods=['POST'])
 @login_required
 def delete_post(id):
-    try:
-        post = Post.query.get_or_404(id)
-        db.session.delete(post)
-        db.session.commit()
-        flash('Imefutwa!', 'success')
-    except:
-        flash('Kosa la Kufuta', 'danger')
+    post = Post.query.get_or_404(id)
+    db.session.delete(post)
+    db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_book/<int:id>', methods=['POST'])
 @login_required
 def delete_book(id):
-    try:
-        book = Book.query.get_or_404(id)
-        db.session.delete(book)
-        db.session.commit()
-        flash('Imefutwa!', 'success')
-    except:
-        flash('Kosa la Kufuta', 'danger')
+    book = Book.query.get_or_404(id)
+    db.session.delete(book)
+    db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_video/<int:id>', methods=['POST'])
 @login_required
 def delete_video(id):
-    try:
-        video = Video.query.get_or_404(id)
-        db.session.delete(video)
-        db.session.commit()
-        flash('Imefutwa!', 'success')
-    except:
-        flash('Kosa la Kufuta', 'danger')
+    video = Video.query.get_or_404(id)
+    db.session.delete(video)
+    db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin_logout')
@@ -376,30 +311,20 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- AUTO-CREATE DATABASE ---
+# --- DB INIT ---
 with app.app_context():
     try:
         db.create_all()
-        # Admin
         if not User.query.filter_by(username='admin').first():
             hashed_pw = sha256_crypt.hash("adminpass")
             user = User(username='admin', password=hashed_pw, is_admin=True)
             db.session.add(user)
             db.session.commit()
-            print(">>> ADMIN CREATED", file=sys.stderr)
-        
-        # About
         if not About.query.first():
             db.session.add(About())
             db.session.commit()
-        
-        # Visitor
-        if not Visitor.query.first():
-            db.session.add(Visitor(count=0))
-            db.session.commit()
-            
     except Exception as e:
-        print(f">>> DB INIT ERROR: {e}", file=sys.stderr)
+        print(f"DB Init Error: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)
