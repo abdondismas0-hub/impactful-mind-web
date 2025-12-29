@@ -10,29 +10,36 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-# --- 1. CONFIGURATION (MIPANGILIO YA MSINGI) ---
+# --- CONFIGURATION ---
 app = Flask(__name__)
 
-# -- Database Logic (Smart Switch) --
-# Hii inaangalia kama tuko Render (kuna DATABASE_URL) au Simu (hakuna)
+# --- DIAGNOSTIC DATABASE SETUP (HII NDIO SIRI) ---
+# Tunachunguza Environment Variables kuona kama PostgreSQL ipo
 database_url = os.environ.get('DATABASE_URL')
 
-if database_url and database_url.startswith("postgres://"):
-    # Fix kwa ajili ya Render (inabadilisha postgres:// kuwa postgresql://)
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+if database_url:
+    # Fix ya Render (postgres -> postgresql)
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(">>> STATUS: IMEUNGANISHWA NA POSTGRESQL (RENDER) - DATA SALAMA", file=sys.stderr)
 else:
-    # Tuko Local (Simu/PC): Tunatumia SQLite
+    # Fallback ya Local
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     DB_PATH = os.path.join(BASE_DIR, 'database.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
+    print(">>> STATUS: INATUMIA SQLITE (LOCAL) - DATA ZITAFUTIKA RENDER IKIRESTART", file=sys.stderr)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'impactful_mind_strong_key_2025' 
+app.config['SECRET_KEY'] = 'impactful_mind_pro_key_2025' 
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
 
-# -- Cloudinary Setup --
-# Inasoma 'CLOUDINARY_URL' kutoka kwenye Environment Variables za Render moja kwa moja.
+# Cloudinary Check
+if not os.environ.get('CLOUDINARY_URL'):
+    print(">>> WARNING: CLOUDINARY_URL HAIPO. PICHA ZITAFUTIKA.", file=sys.stderr)
+else:
+    print(">>> STATUS: CLOUDINARY IMEUNGANISHWA.", file=sys.stderr)
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -43,38 +50,31 @@ login_manager.login_message_category = 'info'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- 2. HELPER FUNCTION: UPLOAD (HII NDIO INAYOOKOA DATA) ---
+# --- HELPER: SAVE FILE ---
 def save_file(file_storage):
-    """
-    Kazi yake: Kupokea faili na kuamua liende wapi.
-    - Ikiwa tupo Render (Cloudinary ipo): Lipeleke Cloudinary.
-    - Ikiwa tupo Local: Liweke kwenye folda ya simu.
-    """
     if not file_storage or file_storage.filename == '':
         return None
     
-    # Angalia kama tumeunganisha Cloudinary
+    # Check Cloudinary
     if os.environ.get('CLOUDINARY_URL'):
         try:
-            # Upload Cloudinary (Auto detect: image, video, pdf)
-            # Tunatumia resource_type 'auto' ili ikubali kila kitu
             upload_result = cloudinary.uploader.upload(file_storage, resource_type="auto")
-            return upload_result['secure_url'] # Tunarudisha Link ya mtandaoni (https://...)
+            return upload_result['secure_url'] 
         except Exception as e:
-            print(f"Cloudinary Error: {e}", file=sys.stderr)
+            print(f">>> CLOUDINARY ERROR: {e}", file=sys.stderr)
             return None
     else:
-        # Hifadhi kwenye simu/kompyuta (Local Backup)
+        # Local Fallback
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.makedirs(app.config['UPLOAD_FOLDER'])
         filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + file_storage.filename
         file_storage.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return filename
 
-# --- 3. MODELS (RAMANI YA DATA) ---
+# --- MODELS ---
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
+    username = db.Column(db.String(20), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False) 
     is_admin = db.Column(db.Boolean, default=False)
 
@@ -83,7 +83,7 @@ class Post(db.Model):
     title = db.Column(db.String(150), nullable=False)
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    image_file = db.Column(db.String(500), nullable=True) # 500 chars kwa URL ndefu
+    image_file = db.Column(db.String(500), nullable=True) 
     is_carousel = db.Column(db.Boolean, default=False)
 
 class Book(db.Model):
@@ -92,14 +92,14 @@ class Book(db.Model):
     author = db.Column(db.String(100), nullable=True)
     description = db.Column(db.Text, nullable=True)
     category = db.Column(db.String(50), nullable=True)
-    file_path = db.Column(db.String(500), nullable=False) # 500 chars kwa URL ndefu
+    file_path = db.Column(db.String(500), nullable=False)
     date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    video_file = db.Column(db.String(500), nullable=False) # 500 chars kwa URL ndefu
+    video_file = db.Column(db.String(500), nullable=False)
     date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 class About(db.Model):
@@ -107,15 +107,15 @@ class About(db.Model):
     founder_name = db.Column(db.String(100), nullable=False, default="Jina la Founder")
     founder_bio = db.Column(db.Text, nullable=False, default="Maelezo...")
     founder_image = db.Column(db.String(500), nullable=True)
-    mission = db.Column(db.Text, nullable=True, default="Mission yetu...")
-    vision = db.Column(db.Text, nullable=True, default="Vision yetu...")
+    mission = db.Column(db.Text, nullable=True)
+    vision = db.Column(db.Text, nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
+# Analytics
 class Visitor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     count = db.Column(db.Integer, default=0)
 
-# --- 4. CONTEXT PROCESSOR (Kuzuia Error Footer) ---
 @app.context_processor
 def inject_global_vars():
     try:
@@ -124,17 +124,17 @@ def inject_global_vars():
         about_info = None
     return dict(about_info=about_info)
 
-# --- 5. PUBLIC ROUTES ---
+# --- ROUTES ---
 
 @app.route("/")
 def home():
-    # Analytics: Ongeza wageni
+    # Analytics
     try:
         visitor = Visitor.query.first()
         if not visitor:
-            visitor = Visitor(count=0)
-            db.session.add(visitor)
-        visitor.count += 1
+            db.session.add(Visitor(count=1))
+        else:
+            visitor.count += 1
         db.session.commit()
     except: pass
 
@@ -146,7 +146,6 @@ def home():
         except: videos = []
         about_info = About.query.first()
     except:
-        # Error handling: Rudisha tupu kama DB ina shida, isicrash
         carousel_posts = []
         latest_posts = []
         latest_books = []
@@ -160,13 +159,16 @@ def home():
 @app.route("/search")
 def search():
     query = request.args.get('q')
-    posts = []
-    books = []
     if query:
         try:
             posts = Post.query.filter(or_(Post.title.ilike(f'%{query}%'), Post.content.ilike(f'%{query}%'))).all()
             books = Book.query.filter(or_(Book.title.ilike(f'%{query}%'), Book.author.ilike(f'%{query}%'))).all()
-        except: pass
+        except:
+            posts = []
+            books = []
+    else:
+        posts = []
+        books = []
     return render_template('search.html', title='Matokeo', posts=posts, books=books, query=query)
 
 @app.route("/library")
@@ -174,12 +176,6 @@ def library():
     try: books = Book.query.all()
     except: books = []
     return render_template('library.html', title='Maktaba', books=books)
-
-# ROUTE YA KUSOMA KITABU (Inafanya kazi na read_book.html mpya)
-@app.route("/read/<int:book_id>")
-def read_book(book_id):
-    book = Book.query.get_or_404(book_id)
-    return render_template('read_book.html', title=book.title, book=book)
 
 @app.route("/posts")
 def posts():
@@ -196,19 +192,18 @@ def view_post(post_id):
     post = Post.query.get_or_404(post_id)
     return render_template('view_post.html', title=post.title, post=post)
 
-# ROUTE MAALUM YA KUTATUA 'THIS PAGE IS NOT WORKING'
+@app.route('/read/<int:book_id>')
+def read_book(book_id):
+    book = Book.query.get_or_404(book_id)
+    return render_template('read_book.html', title=book.title, book=book)
+
 @app.route('/download/<path:filename>')
 def download_book(filename):
-    """
-    Hii route ina akili:
-    - Ikiwa filename ni link ya mtandaoni (Cloudinary), ina-redirect huko.
-    - Ikiwa ni faili la ndani, inalitafuta kwenye folder.
-    """
     if filename and (filename.startswith('http://') or filename.startswith('https://')):
         return redirect(filename)
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-# --- 6. ADMIN ROUTES ---
+# --- ADMIN ROUTES ---
 
 @app.route("/admin_login", methods=['GET', 'POST'])
 def admin_login():
@@ -261,10 +256,15 @@ def add_post():
         
         image_url = save_file(request.files.get('image_file'))
         
+        # Check if upload failed
+        if request.files.get('image_file') and request.files.get('image_file').filename != '' and not image_url:
+            flash('Kosa: Picha haikupakiwa (Check Logs)', 'danger')
+            return redirect(url_for('add_post'))
+
         new_post = Post(title=title, content=content, image_file=image_url, is_carousel=is_carousel)
         db.session.add(new_post)
         db.session.commit()
-        flash('Post imeongezwa!', 'success')
+        flash('Post imehifadhiwa!', 'success')
         return redirect(url_for('admin_dashboard'))
     return render_template('add_post.html')
 
@@ -337,28 +337,37 @@ def edit_about():
 @app.route('/admin/delete_post/<int:id>', methods=['POST'])
 @login_required
 def delete_post(id):
-    post = Post.query.get_or_404(id)
-    db.session.delete(post)
-    db.session.commit()
-    flash('Imefutwa!', 'success')
+    try:
+        post = Post.query.get_or_404(id)
+        db.session.delete(post)
+        db.session.commit()
+        flash('Imefutwa!', 'success')
+    except:
+        flash('Kosa la Kufuta', 'danger')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_book/<int:id>', methods=['POST'])
 @login_required
 def delete_book(id):
-    book = Book.query.get_or_404(id)
-    db.session.delete(book)
-    db.session.commit()
-    flash('Imefutwa!', 'success')
+    try:
+        book = Book.query.get_or_404(id)
+        db.session.delete(book)
+        db.session.commit()
+        flash('Imefutwa!', 'success')
+    except:
+        flash('Kosa la Kufuta', 'danger')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_video/<int:id>', methods=['POST'])
 @login_required
 def delete_video(id):
-    video = Video.query.get_or_404(id)
-    db.session.delete(video)
-    db.session.commit()
-    flash('Imefutwa!', 'success')
+    try:
+        video = Video.query.get_or_404(id)
+        db.session.delete(video)
+        db.session.commit()
+        flash('Imefutwa!', 'success')
+    except:
+        flash('Kosa la Kufuta', 'danger')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin_logout')
@@ -367,27 +376,30 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- 7. AUTO-CREATE DATABASE (Inajenga DB ikifutika) ---
+# --- AUTO-CREATE DATABASE ---
 with app.app_context():
     try:
         db.create_all()
-        # Create Admin
+        # Admin
         if not User.query.filter_by(username='admin').first():
             hashed_pw = sha256_crypt.hash("adminpass")
             user = User(username='admin', password=hashed_pw, is_admin=True)
             db.session.add(user)
             db.session.commit()
-            print("Admin Created.")
-        # Create About Info
+            print(">>> ADMIN CREATED", file=sys.stderr)
+        
+        # About
         if not About.query.first():
             db.session.add(About())
             db.session.commit()
-        # Create Visitor Counter
+        
+        # Visitor
         if not Visitor.query.first():
             db.session.add(Visitor(count=0))
             db.session.commit()
+            
     except Exception as e:
-        print(f"DB Init Error: {e}", file=sys.stderr)
+        print(f">>> DB INIT ERROR: {e}", file=sys.stderr)
 
 if __name__ == '__main__':
     app.run(debug=True)
