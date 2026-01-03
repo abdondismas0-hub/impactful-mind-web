@@ -1,53 +1,46 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="padding-top: 40px; max-width: 800px; margin: auto;">
+<div style="padding-top: 30px; height: 90vh; display: flex; flex-direction: column; max-width: 1200px; margin: auto;">
     
-    <!-- Kichwa na Maelezo -->
-    <div class="glass-panel" style="text-align: center; padding: 50px 30px;">
+    <!-- Header -->
+    <div class="glass-panel" style="padding: 10px 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+        <h2 style="color: var(--accent); margin: 0; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            {{ book.title }}
+        </h2>
+        <a href="{{ url_for('library') }}" class="btn" style="background: transparent; border: 1px solid white; padding: 5px 15px; font-size: 0.8rem; color: white;">
+            <i class="fas fa-times"></i> Funga
+        </a>
+    </div>
+
+    <!-- PDF VIEWER CONTAINER -->
+    <div class="glass-panel" style="padding: 0; overflow: hidden; flex-grow: 1; background: #fff; border-radius: 10px; position: relative;">
         
-        <!-- Icon ya Kitabu -->
-        <div style="width: 100px; height: 100px; background: #2c3e50; margin: 0 auto 30px auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--accent);">
-            <i class="fas fa-book-open fa-3x" style="color: #fff;"></i>
-        </div>
-
-        <h1 style="color: var(--accent); font-size: 2.2rem; margin-bottom: 10px;">{{ book.title }}</h1>
-        <p style="color: #aaa; font-size: 1.1rem; margin-bottom: 30px;">Mwandishi: <span style="color: white;">{{ book.author }}</span></p>
-
-        <!-- Box la Maelezo -->
-        <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px; text-align: left; margin-bottom: 40px; border-left: 4px solid #3498db;">
-            <h4 style="color: #3498db; margin-bottom: 10px; font-weight: bold;">Kuhusu Kitabu Hiki:</h4>
-            <p style="color: #ddd; line-height: 1.8; font-size: 1rem;">
-                {{ book.description }}
-            </p>
-        </div>
-
-        <!-- VITUFE VYA KUSOMA (HAPA NDIPO SULUHISHO LILIPO) -->
-        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+        <!-- ULINZI: Tunahakikisha file_path ipo kabla ya kuitumia -->
+        {% if book.file_path %}
             
-            <!-- 1. Kitufe cha Kurudi -->
-            <a href="{{ url_for('library') }}" class="btn" style="background: transparent; border: 1px solid #aaa; color: #aaa;">
-                <i class="fas fa-arrow-left"></i> Rudi Maktaba
-            </a>
+            <!-- GOOGLE DOCS VIEWER (Hii ndiyo inafanya PDF isomeke online kwenye simu zote) -->
+            <iframe 
+                src="https://docs.google.com/gview?url={{ book.file_path }}&embedded=true" 
+                style="width:100%; height:100%; border: none;" 
+                frameborder="0">
+            </iframe>
 
-            <!-- 2. Kitufe cha KUSOMA (DIRECT LINK) -->
-            <!-- Tunatumia link ya Cloudinary moja kwa moja kuepuka Error 500/401 -->
-            {% if 'http' in book.file_path %}
-                <a href="{{ book.file_path }}" target="_blank" class="btn" style="background-color: var(--success); color: white; padding: 12px 40px; font-size: 1.1rem; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);">
-                    <i class="fas fa-book-reader"></i> Soma Kitabu (PDF)
+            <!-- Fallback: Link ya Dharura (Itaonekana kama Google ikichelewa) -->
+            <div style="position: absolute; bottom: 0; width: 100%; text-align: center; pointer-events: none;">
+                <a href="{{ book.file_path }}" target="_blank" style="pointer-events: auto; background: rgba(0,0,0,0.8); color: white; padding: 5px 10px; border-radius: 5px; font-size: 0.7rem; text-decoration: none;">
+                    Ikiwa haifunguki, bofya hapa
                 </a>
-            {% else %}
-                <!-- Kwa vitabu vya zamani (kama vipo) -->
-                <a href="{{ url_for('download_book', filename=book.file_path) }}" target="_blank" class="btn" style="background-color: var(--success); color: white; padding: 12px 40px;">
-                    <i class="fas fa-book-reader"></i> Soma Kitabu
-                </a>
-            {% endif %}
-            
-        </div>
-        
-        <p style="margin-top: 25px; font-size: 0.85rem; color: #666;">
-            <i class="fas fa-info-circle"></i> Kitabu kitafunguka kwenye ukurasa mpya.
-        </p>
+            </div>
+
+        {% else %}
+            <!-- Kama Database haina link ya kitabu hiki -->
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #333; flex-direction: column;">
+                <i class="fas fa-exclamation-triangle fa-3x" style="color: #e74c3c; margin-bottom: 15px;"></i>
+                <h3>Samahani, faili la kitabu halikupatikana.</h3>
+                <p>Tafadhali wasiliana na Admin.</p>
+            </div>
+        {% endif %}
 
     </div>
 
