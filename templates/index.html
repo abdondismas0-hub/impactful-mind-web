@@ -1,297 +1,106 @@
-import os
-import sys
-from datetime import datetime
-from flask import Flask, render_template, url_for, flash, redirect, request, send_from_directory
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user, login_required
-from passlib.hash import sha256_crypt 
-from sqlalchemy import or_
-import cloudinary
-import cloudinary.uploader
+{% extends "base.html" %}
 
-app = Flask(__name__)
+{% block content %}
 
-# --- 1. CONFIGURATION ---
-database_url = os.environ.get('DATABASE_URL')
-if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    DB_PATH = os.path.join(BASE_DIR, 'database.db')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
+    <!-- 1. SLIDESHOW -->
+    <div class="carousel-container" style="margin-bottom: 50px;">
+        {% if carousel_posts %}
+            {% for post in carousel_posts %}
+            <div class="carousel-item fade" style="display: {{ 'block' if loop.first else 'none' }};">
+                
+                <!-- CHECKER: Kama picha ipo -->
+                {% if post.image_file %}
+                    {% if 'http' in post.image_file %}
+                        <!-- Cloudinary Link -->
+                        <div class="slide-bg" style="background-image: url('{{ post.image_file }}');"></div>
+                        <img src="{{ post.image_file }}" class="slide-img-front" alt="{{ post.title }}">
+                    {% else %}
+                        <!-- Local File -->
+                        <div class="slide-bg" style="background-image: url('{{ url_for('download_book', filename=post.image_file) }}');"></div>
+                        <img src="{{ url_for('download_book', filename=post.image_file) }}" class="slide-img-front" alt="{{ post.title }}">
+                    {% endif %}
+                {% endif %}
 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'rescue_key_2025' 
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
+                <div class="carousel-caption">
+                    <h2 style="color: var(--accent);">{{ post.title }}</h2>
+                    <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn">Soma Zaidi</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <!-- Default -->
+            <div style="height: 100%; display: flex; align-items: center; justify-content: center; background: #1a1a1a;">
+                <h1 style="color: var(--accent);">Karibu Impactful Mind</h1>
+            </div>
+        {% endif %}
+    </div>
 
-db = SQLAlchemy(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'admin_login'
+    <!-- 2. FOUNDER -->
+    <section class="founder-card">
+        <div class="founder-img-box">
+            {% if about_info and about_info.founder_image %}
+                {% if 'http' in about_info.founder_image %}
+                    <img src="{{ about_info.founder_image }}" class="founder-img" alt="Founder">
+                {% else %}
+                    <img src="{{ url_for('download_book', filename=about_info.founder_image) }}" class="founder-img" alt="Founder">
+                {% endif %}
+            {% else %}
+                <div style="width: 100%; height: 100%; background: #333;"></div>
+            {% endif %}
+        </div>
+        <div class="founder-info">
+            <span class="founder-title">MWANZILISHI</span>
+            <h2>{{ about_info.founder_name if about_info else 'Founder' }}</h2>
+            <div class="founder-bio">{{ about_info.founder_bio if about_info else '...' }}</div>
+            <div style="margin-top: 20px;">
+                <a href="{{ url_for('contact') }}" class="btn">Wasiliana Naye</a>
+            </div>
+        </div>
+    </section>
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-# --- HELPER: SAFE FILE SAVE ---
-def save_file(file_storage):
-    if not file_storage or file_storage.filename == '':
-        return None
-    if os.environ.get('CLOUDINARY_URL'):
-        try:
-            res = cloudinary.uploader.upload(file_storage, resource_type="auto")
-            return res['secure_url']
-        except:
-            return None
-    else:
-        if not os.path.exists(app.config['UPLOAD_FOLDER']):
-            os.makedirs(app.config['UPLOAD_FOLDER'])
-        filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + file_storage.filename
-        file_storage.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return filename
-
-# --- MODELS ---
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False)
-
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
-    image_file = db.Column(db.String(500))
-    is_carousel = db.Column(db.Boolean, default=False)
-
-class Book(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    author = db.Column(db.String(100))
-    description = db.Column(db.Text)
-    category = db.Column(db.String(100))
-    file_path = db.Column(db.String(500))
-    date_uploaded = db.Column(db.DateTime, default=datetime.utcnow)
-
-class Video(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text)
-    video_file = db.Column(db.String(500))
-    date_uploaded = db.Column(db.DateTime, default=datetime.utcnow)
-
-class About(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    founder_name = db.Column(db.String(100), default="Founder")
-    founder_bio = db.Column(db.Text, default="Bio...")
-    founder_image = db.Column(db.String(500))
-    mission = db.Column(db.Text)
-    vision = db.Column(db.Text)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
-
-@app.context_processor
-def inject_vars():
-    try: return dict(about_info=About.query.first())
-    except: return dict(about_info=None)
-
-# --- ROUTES ---
-@app.route("/")
-def home():
-    try:
-        carousel = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
-        posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
-        books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
-        about = About.query.first()
-    except:
-        carousel = []; posts = []; books = []; about = None
-    return render_template('index.html', carousel_posts=carousel, posts=posts, books=books, about_info=about, title="Nyumbani")
-
-@app.route("/library")
-def library():
-    try: books = Book.query.all()
-    except: books = []
-    return render_template('library.html', title='Maktaba', books=books)
-
-@app.route("/posts")
-def posts():
-    try: posts = Post.query.all()
-    except: posts = []
-    return render_template('posts.html', title='Daily Posts', posts=posts)
-
-@app.route("/contact")
-def contact():
-    return render_template('contact.html', title='Wasiliana Nasi')
-
-@app.route('/post/<int:post_id>')
-def view_post(post_id):
-    post = Post.query.get_or_404(post_id)
-    return render_template('view_post.html', title=post.title, post=post)
-
-@app.route('/read/<int:book_id>')
-def read_book(book_id):
-    book = Book.query.get_or_404(book_id)
-    return render_template('read_book.html', title=book.title, book=book)
-
-@app.route('/download/<path:filename>')
-def download_book(filename):
-    if filename and (filename.startswith('http://') or filename.startswith('https://')):
-        return redirect(filename)
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-# --- ADMIN ROUTES ---
-@app.route("/admin_login", methods=['GET', 'POST'])
-def admin_login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        try:
-            user = User.query.filter_by(username=username).first()
-            if user and sha256_crypt.verify(password, user.password):
-                login_user(user)
-                return redirect(url_for('admin_dashboard'))
-        except: pass
-        flash('Login Failed', 'danger')
-    return render_template('login.html')
-
-@app.route("/admin")
-@login_required
-def admin_dashboard():
-    try:
-        t_books = Book.query.count()
-        t_posts = Post.query.count()
-        try: t_videos = Video.query.count()
-        except: t_videos = 0
-        
-        books = Book.query.order_by(Book.date_uploaded.desc()).all()
-        posts = Post.query.order_by(Post.date_posted.desc()).all()
-        try: videos = Video.query.order_by(Video.date_uploaded.desc()).all()
-        except: videos = []
-    except:
-        t_books=0; t_posts=0; t_videos=0
-        books=[]; posts=[]; videos=[]
-    return render_template('dashboard.html', total_books=t_books, total_posts=t_posts, total_videos=t_videos, books=books, posts=posts, videos=videos)
-
-# ... (Add/Delete Routes zinabaki kama zilivyo kwenye faili la awali, ziweke hapa) ...
-# Kwa ufupi nimeziacha ili kutoshea hapa, HAKIKISHA UNAWEKA ROUTES ZA ADD/DELETE HAPA
-# (Copy kutoka jibu lililopita kwa sehemu ya ADD/DELETE routes)
-
-@app.route('/admin/add_post', methods=['GET', 'POST'])
-@login_required
-def add_post():
-    if request.method == 'POST':
-        title = request.form.get('title')
-        content = request.form.get('content')
-        is_carousel = request.form.get('is_carousel') == 'on'
-        image_url = save_file(request.files.get('image_file'))
-        new_post = Post(title=title, content=content, image_file=image_url, is_carousel=is_carousel)
-        db.session.add(new_post)
-        db.session.commit()
-        return redirect(url_for('admin_dashboard'))
-    return render_template('add_post.html')
-
-@app.route('/admin/add_book', methods=['GET', 'POST'])
-@login_required
-def add_book():
-    if request.method == 'POST':
-        title = request.form.get('title')
-        author = request.form.get('author')
-        description = request.form.get('description')
-        category = request.form.get('category')
-        file_url = save_file(request.files.get('pdf_file'))
-        if file_url:
-            new_book = Book(title=title, author=author, description=description, category=category, file_path=file_url)
-            db.session.add(new_book)
-            db.session.commit()
-            return redirect(url_for('admin_dashboard'))
-    return render_template('add_book.html')
-
-@app.route('/admin/add_video', methods=['GET', 'POST'])
-@login_required
-def add_video():
-    if request.method == 'POST':
-        title = request.form.get('title')
-        description = request.form.get('description')
-        file_url = save_file(request.files.get('video_file'))
-        if file_url:
-            new_video = Video(title=title, description=description, video_file=file_url)
-            db.session.add(new_video)
-            db.session.commit()
-            return redirect(url_for('admin_dashboard'))
-    return render_template('add_video.html')
-
-@app.route('/admin/edit_about', methods=['GET', 'POST'])
-@login_required
-def edit_about():
-    try:
-        about_info = About.query.first()
-        if not about_info:
-            about_info = About()
-            db.session.add(about_info)
-            db.session.commit()
-    except: return "DB Error"
+    <!-- 3. LATEST CONTENT -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+        <div class="glass-panel">
+            <h3 style="color: var(--accent);">Machapisho</h3>
+            <ul style="list-style: none; padding: 0;">
+                {% for post in posts %}
+                <li style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <a href="{{ url_for('view_post', post_id=post.id) }}" style="color: white; font-weight: bold;">{{ post.title }}</a>
+                </li>
+                {% else %}
+                    <li>Hakuna posts bado.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="glass-panel">
+            <h3 style="color: var(--accent);">Vitabu</h3>
+            <ul style="list-style: none; padding: 0;">
+                {% for book in books %}
+                <li style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;">
+                    <span style="color: white;">{{ book.title }}</span>
+                    <a href="{{ url_for('read_book', book_id=book.id) }}" style="color: var(--success);">Soma</a>
+                </li>
+                {% else %}
+                    <li>Hakuna vitabu bado.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
     
-    if request.method == 'POST':
-        about_info.founder_name = request.form.get('founder_name')
-        about_info.founder_bio = request.form.get('founder_bio')
-        about_info.mission = request.form.get('mission')
-        about_info.vision = request.form.get('vision')
-        new_image = save_file(request.files.get('founder_image'))
-        if new_image: about_info.founder_image = new_image
-        db.session.commit()
-        return redirect(url_for('admin_dashboard'))
-    return render_template('edit_about.html', about_info=about_info)
+    <script>
+        let slideIndex = 0;
+        const items = document.querySelectorAll('.carousel-item');
+        function cycleSlides() {
+            if(items.length > 0) {
+                for(let i=0; i<items.length; i++) items[i].style.display = "none";
+                slideIndex++;
+                if(slideIndex > items.length) slideIndex = 1;
+                items[slideIndex-1].style.display = "flex"; 
+                setTimeout(cycleSlides, 5000);
+            }
+        }
+        cycleSlides();
+    </script>
+{% endblock %}
 
-@app.route('/admin/delete_post/<int:id>', methods=['POST'])
-@login_required
-def delete_post(id):
-    try:
-        post = Post.query.get_or_404(id)
-        db.session.delete(post)
-        db.session.commit()
-    except: pass
-    return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/delete_book/<int:id>', methods=['POST'])
-@login_required
-def delete_book(id):
-    try:
-        book = Book.query.get_or_404(id)
-        db.session.delete(book)
-        db.session.commit()
-    except: pass
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_video/<int:id>', methods=['POST'])
-@login_required
-def delete_video(id):
-    try:
-        video = Video.query.get_or_404(id)
-        db.session.delete(video)
-        db.session.commit()
-    except: pass
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin_logout')
-@login_required
-def admin_logout():
-    logout_user()
-    return redirect(url_for('home'))
-
-# --- AUTO-DB FIX ---
-with app.app_context():
-    try:
-        db.create_all()
-        if not User.query.filter_by(username='admin').first():
-            hashed_pw = sha256_crypt.hash("adminpass")
-            user = User(username='admin', password=hashed_pw, is_admin=True)
-            db.session.add(user)
-            db.session.commit()
-        if not About.query.first():
-            db.session.add(About())
-            db.session.commit()
-    except:
-        pass
-
-if __name__ == '__main__':
-    app.run(debug=True)
