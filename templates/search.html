@@ -1,22 +1,38 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2 style="color: #f1c40f;">Matokeo ya Utafutaji: "{{ query }}"</h2>
-{% if posts or books %}
-    {% for post in posts %}
-        <div class="glass-panel" style="margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-            <h3><a href="{{ url_for('view_post', post_id=post.id) }}" style="color: white;">{{ post.title }}</a></h3>
-            <p>{{ post.content[:100] }}...</p>
+<div style="padding-top: 30px;">
+    <h2 style="color: var(--accent);">Matokeo: "{{ query }}"</h2>
+    
+    {% if posts or books %}
+        <div style="display: grid; gap: 20px; margin-top: 20px;">
+            {% for post in posts %}
+            <div class="glass-panel" style="padding: 20px;">
+                <h3><a href="{{ url_for('view_post', post_id=post.id) }}" style="color: white;">{{ post.title }}</a></h3>
+                <p>{{ post.content[:100] }}...</p>
+            </div>
+            {% endfor %}
+            
+            {% for book in books %}
+            <div class="glass-panel" style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.2rem;">{{ book.title }} (Kitabu)</h3>
+                    <small style="color: #aaa;">{{ book.author }}</small>
+                </div>
+                
+                <!-- SMART LINK -->
+                {% if 'http' in book.file_path %}
+                    <a href="{{ book.file_path }}" target="_blank" class="btn" style="background-color: var(--success); padding: 5px 15px; font-size: 0.8rem;">Pakua</a>
+                {% else %}
+                    <a href="{{ url_for('download_book', filename=book.file_path) }}" target="_blank" class="btn" style="background-color: var(--success); padding: 5px 15px; font-size: 0.8rem;">Pakua</a>
+                {% endif %}
+            </div>
+            {% endfor %}
         </div>
-    {% endfor %}
-    {% for book in books %}
-        <div class="glass-panel" style="margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-            <h3>{{ book.title }} (Kitabu)</h3>
-            <a href="{{ url_for('download_book', filename=book.file_path) }}" style="color: #2ecc71;">Pakua PDF</a>
-        </div>
-    {% endfor %}
-{% else %}
-    <p>Hakuna matokeo yaliyopatikana.</p>
-{% endif %}
+    {% else %}
+        <p>Hakuna matokeo.</p>
+    {% endif %}
+</div>
 {% endblock %}
 
 
