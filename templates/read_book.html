@@ -3,44 +3,41 @@
 {% block content %}
 <div style="padding-top: 40px; max-width: 800px; margin: auto;">
     
-    <div class="glass-panel" style="text-align: center; padding: 50px 30px;">
+    <!-- Kadi ya Maelezo ya Kitabu -->
+    <div class="glass-panel" style="text-align: center; padding: 40px 20px; border-top: 5px solid var(--accent);">
         
-        <!-- Icon ya Kitabu -->
-        <div style="width: 100px; height: 140px; background: #2c3e50; margin: 0 auto 30px auto; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid var(--accent);">
-            <i class="fas fa-book fa-4x" style="color: #fff;"></i>
+        <!-- Icon Kubwa -->
+        <div style="width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; border: 2px solid var(--accent);">
+            <i class="fas fa-book-open fa-3x" style="color: #fff;"></i>
         </div>
 
-        <!-- Kichwa na Mwandishi -->
-        <h1 style="color: var(--accent); font-size: 2.5rem; margin-bottom: 10px;">{{ book.title }}</h1>
-        <p style="color: #aaa; font-size: 1.2rem; margin-bottom: 30px;">Mwandishi: <span style="color: white;">{{ book.author }}</span></p>
+        <h1 style="color: var(--accent); font-size: 2rem; margin-bottom: 10px;">{{ book.title }}</h1>
+        <p style="color: #aaa; font-size: 1.1rem; margin-bottom: 30px;">Mwandishi: <span style="color: white;">{{ book.author }}</span></p>
 
-        <!-- Maelezo ya Kitabu -->
-        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; text-align: left; margin-bottom: 40px;">
-            <h4 style="color: #3498db; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px;">Kuhusu Kitabu Hiki:</h4>
-            <p style="color: #ddd; line-height: 1.8;">{{ book.description }}</p>
+        <!-- Maelezo -->
+        <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; text-align: left; margin-bottom: 40px; border-left: 3px solid #3498db;">
+            <h4 style="color: #3498db; margin-bottom: 10px;">Kuhusu Kitabu:</h4>
+            <p style="color: #ddd; line-height: 1.6;">{{ book.description }}</p>
+            <p style="color: #888; font-size: 0.8rem; margin-top: 15px;">Imepakiwa: {{ book.date_uploaded.strftime('%d %B %Y') }}</p>
         </div>
 
-        <!-- VITUFE VYA KUSOMA -->
+        <!-- VITUFE VYA KUFUNGUA (Hii ndiyo suluhisho) -->
         <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
             
-            <!-- 1. Kitufe cha Kurudi -->
             <a href="{{ url_for('library') }}" class="btn" style="background: transparent; border: 1px solid #aaa; color: #aaa;">
-                <i class="fas fa-arrow-left"></i> Rudi Maktaba
+                <i class="fas fa-arrow-left"></i> Rudi
             </a>
 
-            <!-- 2. Kitufe cha KUSOMA (DIRECT LINK FIX) -->
-            <!-- Hapa tunatumia logic: Kama ni link ya mtandaoni, itumie moja kwa moja. Kama ni faili la ndani, tumia download_book -->
-            {% if 'http' in book.file_path %}
-                <a href="{{ book.file_path }}" target="_blank" class="btn" style="background-color: var(--success); color: white; padding: 12px 40px; font-size: 1.1rem; box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);">
-                    <i class="fas fa-book-reader"></i> Soma Sasa (PDF)
-                </a>
-            {% else %}
-                <a href="{{ url_for('download_book', filename=book.file_path) }}" target="_blank" class="btn" style="background-color: var(--success); color: white; padding: 12px 40px; font-size: 1.1rem;">
-                    <i class="fas fa-book-reader"></i> Soma Sasa (Local)
-                </a>
-            {% endif %}
+            <!-- Hii Link inafungua PDF kwenye Tab Mpya (Salama 100%) -->
+            <a href="{{ book.file_path }}" target="_blank" class="btn" style="background-color: var(--success); color: white; padding: 12px 30px; font-size: 1.1rem; box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);">
+                <i class="fas fa-file-pdf"></i> Fungua / Pakua PDF
+            </a>
             
         </div>
+        
+        <p style="margin-top: 20px; font-size: 0.8rem; color: #666;">
+            *Kitabu kitafunguka kwenye ukurasa mpya ili usome kwa urahisi.
+        </p>
 
     </div>
 
