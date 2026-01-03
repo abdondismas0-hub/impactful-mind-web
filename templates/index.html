@@ -3,14 +3,15 @@
 {% block content %}
 
     <!-- 1. SLIDESHOW -->
-    <div class="carousel-container">
+    <div class="carousel-container" style="margin-bottom: 60px;">
         {% if carousel_posts %}
             {% for post in carousel_posts %}
-            <div class="carousel-item fade" style="display: {{ 'block' if loop.first else 'none' }};">
-                <div class="slide-bg" style="background-image: url('{{ post.image_file }}');"></div>
-                <img src="{{ post.image_file }}" class="slide-img-front" alt="{{ post.title }}">
+            <div class="carousel-item fade" style="display: {{ 'block' if loop.first else 'none' }}; background-image: url('{{ url_for('download_book', filename=post.image_file) }}');">
+                <div class="slide-bg" style="background-image: url('{{ url_for('download_book', filename=post.image_file) }}');"></div>
+                <img src="{{ url_for('download_book', filename=post.image_file) }}" class="slide-img-front" alt="{{ post.title }}">
+
                 <div class="carousel-caption">
-                    <h2 style="color: var(--accent); font-size: 2.5rem; text-shadow: 2px 2px 4px #000;">{{ post.title }}</h2>
+                    <h2 style="color: var(--accent); font-size: 2.2rem; text-shadow: 2px 2px 4px #000;">{{ post.title }}</h2>
                     <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn">Soma Zaidi</a>
                 </div>
             </div>
@@ -25,85 +26,67 @@
         {% endif %}
     </div>
 
-    <!-- 2. FOUNDER SECTION (SQUARE) -->
+    <!-- 2. FOUNDER SECTION -->
     <section class="founder-card">
         <div class="founder-img-box">
             {% if about_info and about_info.founder_image %}
-                <img src="{{ about_info.founder_image }}" class="founder-img" alt="Founder">
+                <img src="{{ url_for('download_book', filename=about_info.founder_image) }}" class="founder-img" alt="Founder">
             {% else %}
-                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #222;">
+                <div style="width: 100%; height: 100%; background: #333; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-user fa-5x" style="color: #555;"></i>
                 </div>
             {% endif %}
         </div>
-        
         <div class="founder-info">
-            <span style="color: #aaa; letter-spacing: 2px; font-weight: bold; font-size: 0.9rem; margin-bottom: 10px; display: block;">MWANZILISHI</span>
+            <span class="founder-title">MWANZILISHI</span>
             <h2>{{ about_info.founder_name if about_info else 'Jina la Founder' }}</h2>
-            <div style="color: #ddd; line-height: 1.8; margin-bottom: 30px;">
-                {{ about_info.founder_bio if about_info else 'Maelezo ya mwanzilishi yataonekana hapa...' }}
+            <div class="founder-bio">
+                {{ about_info.founder_bio if about_info else 'Maelezo...' }}
             </div>
             <a href="{{ url_for('contact') }}" class="btn">Wasiliana Naye</a>
         </div>
     </section>
 
-    <!-- 3. LATEST CONTENT (GRID SYSTEM) -->
-    <div class="content-grid">
+    <!-- 3. LATEST CONTENT -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
         
         <!-- Latest Posts -->
         <div class="glass-panel">
             <h3 style="color: var(--accent); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <i class="fas fa-newspaper"></i> Machapisho
+                <i class="fas fa-newspaper"></i> Machapisho Mapya
             </h3>
-            <div style="margin-top: 20px;">
+            <ul style="list-style: none; padding: 0;">
                 {% for post in posts %}
-                <div class="list-item">
-                    <div class="list-thumb">
-                        {% if post.image_file %}
-                        <img src="{{ post.image_file }}" alt="Post">
-                        {% endif %}
-                    </div>
-                    <div>
-                        <a href="{{ url_for('view_post', post_id=post.id) }}" style="color: white; font-weight: bold; text-decoration: none; font-size: 1rem;">{{ post.title }}</a>
-                        <br><small style="color: #aaa;">{{ post.date_posted.strftime('%d %b') }}</small>
-                    </div>
-                </div>
+                <li style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <a href="{{ url_for('view_post', post_id=post.id) }}" style="color: white; font-weight: bold; text-decoration: none;">{{ post.title }}</a>
+                </li>
                 {% else %}
-                    <p style="color: #888;">Hakuna posts bado.</p>
+                    <li style="color: #888;">Hakuna posts bado.</li>
                 {% endfor %}
-            </div>
-            <div style="text-align: right; margin-top: 15px;">
-                <a href="{{ url_for('posts') }}" style="color: var(--accent); text-decoration: none;">Ona Zote &rarr;</a>
-            </div>
+            </ul>
         </div>
 
         <!-- Latest Books -->
         <div class="glass-panel">
             <h3 style="color: var(--accent); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <i class="fas fa-book"></i> Vitabu
+                <i class="fas fa-book"></i> Vitabu Vipya
             </h3>
-            <div style="margin-top: 20px;">
+            <ul style="list-style: none; padding: 0;">
                 {% for book in books %}
-                <div class="list-item" style="justify-content: space-between;">
-                    <div>
-                        <span style="font-weight: bold; color: #fff; display: block;">{{ book.title }}</span>
-                        <small style="color: #aaa;">{{ book.author }}</small>
-                    </div>
-                    <a href="{{ url_for('read_book', book_id=book.id) }}" style="color: var(--success); background: rgba(46,204,113,0.1); padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 0.9rem;">
-                        Soma
+                <li style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; color: #fff;">{{ book.title }}</span>
+                    <!-- DOWNLOAD LINK -->
+                    <a href="{{ url_for('download_book', filename=book.file_path) }}" target="_blank" download style="color: var(--success); text-decoration: none; background: rgba(46,204,113,0.1); padding: 5px 10px; border-radius: 5px;">
+                        <i class="fas fa-download"></i> PDF
                     </a>
-                </div>
+                </li>
                 {% else %}
-                    <p style="color: #888;">Hakuna vitabu bado.</p>
+                    <li style="color: #888;">Hakuna vitabu bado.</li>
                 {% endfor %}
-            </div>
-            <div style="text-align: right; margin-top: 15px;">
-                <a href="{{ url_for('library') }}" style="color: var(--accent); text-decoration: none;">Ingia Maktaba &rarr;</a>
-            </div>
+            </ul>
         </div>
-
     </div>
-
+    
     <script>
         let slideIndex = 0;
         const items = document.querySelectorAll('.carousel-item');
@@ -112,7 +95,7 @@
                 for(let i=0; i<items.length; i++) items[i].style.display = "none";
                 slideIndex++;
                 if(slideIndex > items.length) slideIndex = 1;
-                items[slideIndex-1].style.display = "block";
+                items[slideIndex-1].style.display = "flex"; 
                 setTimeout(cycleSlides, 5000);
             }
         }
