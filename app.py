@@ -8,34 +8,30 @@ from passlib.hash import sha256_crypt
 from sqlalchemy import or_
 import cloudinary
 import cloudinary.uploader
-import cloudinary.api
 
+# --- CONFIGURATION ---
 app = Flask(__name__)
 
-# --- 1. UCHUNGUZI WA DATABASE (DIAGNOSTIC) ---
+# 1. DATABASE INTELLIGENCE
+# Jaribu kupata Database ya Render
 database_url = os.environ.get('DATABASE_URL')
 
-# Hapa tunaangalia kama Render imeona Database
 if database_url:
-    print(">>> STATUS: RENDER DATABASE IMETAMBULIKA (PostgreSQL)", file=sys.stderr)
+    # Rekebisha link ya postgres kwa ajili ya SQLAlchemy
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print("--- SYSTEM: USING RENDER POSTGRESQL ---", file=sys.stderr)
 else:
-    print(">>> HATARI: RENDER HAIIONI DATABASE_URL. INATUMIA SQLITE (DATA ZITAFUTIKA!)", file=sys.stderr)
+    # Fallback: Tumia SQLite ya ndani (Ili app isicrash, hata kama data zitafutika)
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     DB_PATH = os.path.join(BASE_DIR, 'database.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
+    print("--- SYSTEM: USING LOCAL SQLITE (WARNING: DATA WILL WIPE) ---", file=sys.stderr)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'impactful_mind_master_key_2025' 
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'impactful_fallback_key')
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
-
-# --- 2. UCHUNGUZI WA CLOUDINARY ---
-if os.environ.get('CLOUDINARY_URL'):
-    print(">>> STATUS: CLOUDINARY IMETAMBULIKA (Picha Salama)", file=sys.stderr)
-else:
-    print(">>> HATARI: CLOUDINARY_URL HAIPO. PICHA ZITAFUTIKA!", file=sys.stderr)
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -45,27 +41,25 @@ login_manager.login_view = 'admin_login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- HELPER: SAVE FILE ---
+# --- HELPER: CLOUDINARY UPLOAD ---
 def save_file(file_storage):
     if not file_storage or file_storage.filename == '':
         return None
     
-    # Jaribu Cloudinary kwanza
+    # Jaribu Cloudinary
     if os.environ.get('CLOUDINARY_URL'):
         try:
             upload_result = cloudinary.uploader.upload(file_storage, resource_type="auto")
-            print(f">>> UPLOAD SUCCESS (CLOUD): {upload_result['secure_url']}", file=sys.stderr)
             return upload_result['secure_url'] 
         except Exception as e:
-            print(f">>> UPLOAD ERROR (CLOUD): {e}", file=sys.stderr)
+            print(f"Cloudinary Error: {e}", file=sys.stderr)
             return None
     else:
-        # Local Backup (Hii itafutika Render ikirestart)
+        # Local Fallback
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.makedirs(app.config['UPLOAD_FOLDER'])
         filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + file_storage.filename
         file_storage.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        print(f">>> UPLOAD LOCAL (HII ITAFUTIKA): {filename}", file=sys.stderr)
         return filename
 
 # --- MODELS ---
@@ -77,7 +71,7 @@ class User(db.Model, UserMixin):
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(150), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     image_file = db.Column(db.String(500), nullable=True) 
@@ -85,24 +79,24 @@ class Post(db.Model):
 
 class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(150), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
     author = db.Column(db.String(100), nullable=True)
     description = db.Column(db.Text, nullable=True)
-    category = db.Column(db.String(50), nullable=True)
+    category = db.Column(db.String(100), nullable=True)
     file_path = db.Column(db.String(500), nullable=False)
     date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(150), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     video_file = db.Column(db.String(500), nullable=False)
     date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 class About(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    founder_name = db.Column(db.String(100), nullable=False, default="Jina la Founder")
-    founder_bio = db.Column(db.Text, nullable=False, default="Maelezo...")
+    founder_name = db.Column(db.String(100), nullable=False, default="Founder Name")
+    founder_bio = db.Column(db.Text, nullable=False, default="Bio...")
     founder_image = db.Column(db.String(500), nullable=True)
     mission = db.Column(db.Text, nullable=True)
     vision = db.Column(db.Text, nullable=True)
@@ -124,7 +118,6 @@ def inject_global_vars():
 
 @app.route("/")
 def home():
-    # Analytics
     try:
         visitor = Visitor.query.first()
         if not visitor:
@@ -211,7 +204,7 @@ def admin_login():
             else:
                 flash('Login imeshindikana', 'danger')
         except:
-            flash('Database haijaunganishwa vizuri', 'danger')
+            flash('DB Error', 'danger')
     return render_template('login.html')
 
 @app.route("/admin")
@@ -248,10 +241,6 @@ def add_post():
         
         image_url = save_file(request.files.get('image_file'))
         
-        if request.files.get('image_file') and request.files.get('image_file').filename != '' and not image_url:
-            flash('Kosa: Picha haikuenda Cloudinary. Angalia Render Environment.', 'danger')
-            return redirect(url_for('add_post'))
-        
         new_post = Post(title=title, content=content, image_file=image_url, is_carousel=is_carousel)
         db.session.add(new_post)
         db.session.commit()
@@ -268,15 +257,11 @@ def add_book():
         description = request.form.get('description')
         category = request.form.get('category')
         file_url = save_file(request.files.get('pdf_file'))
-        
         if file_url:
             new_book = Book(title=title, author=author, description=description, category=category, file_path=file_url)
             db.session.add(new_book)
             db.session.commit()
-            flash('Kitabu kimepakiwa!', 'success')
             return redirect(url_for('admin_dashboard'))
-        else:
-            flash('Kosa: PDF haikupakiwa', 'danger')
     return render_template('add_book.html')
 
 @app.route('/admin/add_video', methods=['GET', 'POST'])
@@ -304,17 +289,14 @@ def edit_about():
             db.session.commit()
     except:
         return "DB Error"
-        
     if request.method == 'POST':
         about_info.founder_name = request.form.get('founder_name')
         about_info.founder_bio = request.form.get('founder_bio')
         about_info.mission = request.form.get('mission')
         about_info.vision = request.form.get('vision')
-        
         new_image = save_file(request.files.get('founder_image'))
         if new_image:
             about_info.founder_image = new_image
-            
         db.session.commit()
         return redirect(url_for('admin_dashboard'))
     return render_template('edit_about.html', about_info=about_info)
@@ -349,7 +331,8 @@ def admin_logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- AUTO-CREATE DATABASE ---
+# --- AUTO-CREATE DATABASE (SAFE MODE) ---
+# Hii inahakikisha hata kama DB ni mpya, inajijenga bila ku-crash server
 with app.app_context():
     try:
         db.create_all()
@@ -365,7 +348,7 @@ with app.app_context():
             db.session.add(Visitor(count=0))
             db.session.commit()
     except Exception as e:
-        print(f">>> DB INIT ERROR: {e}", file=sys.stderr)
+        print(f"DB Init Warning: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)
