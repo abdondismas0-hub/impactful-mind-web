@@ -1,65 +1,37 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="padding-top: 40px; max-width: 900px; margin: auto;">
+<div style="padding-top: 40px; max-width: 800px; margin: auto;">
     
-    <!-- Kichwa na Navigation -->
-    <div class="glass-panel" style="padding: 15px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <h2 style="color: var(--accent); margin: 0; font-size: 1.2rem; flex-grow: 1;">
-            <i class="fas fa-book-open"></i> {{ book.title }}
-        </h2>
+    <div class="glass-panel" style="text-align: center; padding: 50px 30px;">
         
-        <!-- Vitufe vya Juu -->
-        <div style="display: flex; gap: 10px;">
-            <!-- Kitufe cha Full Screen (Muhimu kwa Simu) -->
-            <a href="{{ book.file_path }}" target="_blank" class="btn" style="background-color: var(--success); color: white; font-size: 0.9rem; padding: 8px 15px;">
-                <i class="fas fa-expand"></i> Soma Full Screen
-            </a>
-            
-            <a href="{{ url_for('library') }}" class="btn" style="background: transparent; border: 1px solid white; color: white; font-size: 0.9rem; padding: 8px 15px;">
-                <i class="fas fa-times"></i> Funga
-            </a>
+        <div style="width: 100px; height: 100px; background: #2c3e50; margin: 0 auto 30px auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--accent);">
+            <i class="fas fa-book-open fa-3x" style="color: #fff;"></i>
         </div>
-    </div>
 
-    <!-- ENEO LA KUSOMEA (PDF VIEWER) -->
-    <div class="glass-panel" style="padding: 0; overflow: hidden; height: 80vh; background: #525659; border-radius: 10px; position: relative;">
-        
-        {% if book.file_path %}
-            <!-- NJIA YA KWANZA: Object Embed (Bora kwa PC) -->
-            <object data="{{ book.file_path }}" type="application/pdf" width="100%" height="100%">
-                
-                <!-- NJIA YA PILI: Iframe (Backup) -->
-                <iframe src="{{ book.file_path }}" width="100%" height="100%" style="border: none;">
-                    
-                    <!-- NJIA YA TATU: Ujumbe kwa Simu ambazo haziwezi ku-embed -->
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0c1422; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
-                        
-                        <i class="fas fa-book-reader fa-5x" style="color: var(--accent); margin-bottom: 20px;"></i>
-                        <h3 style="color: white; margin-bottom: 10px;">Ukurasa huu unahitaji kuonekana vizuri</h3>
-                        <p style="color: #ccc; margin-bottom: 30px;">
-                            Simu yako inahitaji kufungua kitabu hiki kwenye ukurasa kamili ili usome kwa raha zaidi.
-                        </p>
-                        
-                        <a href="{{ book.file_path }}" target="_blank" class="btn" style="padding: 15px 40px; font-size: 1.1rem; background-color: var(--accent); color: black; font-weight: bold; border-radius: 50px; box-shadow: 0 0 20px rgba(241, 196, 15, 0.4);">
-                            Bofya Hapa Kusoma Kitabu
-                        </a>
-                        
-                    </div>
+        <h1 style="color: var(--accent); font-size: 2.2rem; margin-bottom: 10px;">{{ book.title }}</h1>
+        <p style="color: #aaa; font-size: 1.1rem; margin-bottom: 30px;">Mwandishi: <span style="color: white;">{{ book.author }}</span></p>
 
-                </iframe>
-            </object>
-        {% else %}
-            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: white;">
-                <p>Samahani, faili halipatikani.</p>
-            </div>
-        {% endif %}
+        <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px; text-align: left; margin-bottom: 40px; border-left: 4px solid #3498db;">
+            <h4 style="color: #3498db; margin-bottom: 10px;">Kuhusu Kitabu:</h4>
+            <p style="color: #ddd; line-height: 1.8;">{{ book.description }}</p>
+        </div>
 
-    </div>
-    
-    <!-- Maelezo ya Chini -->
-    <div style="text-align: center; margin-top: 15px; color: #888; font-size: 0.8rem;">
-        <p>Ikiwa kitabu hakifunguki hapo juu, tumia kitufe cha "Soma Full Screen".</p>
+        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+            <a href="{{ url_for('library') }}" class="btn" style="background: transparent; border: 1px solid #aaa; color: #aaa;">Rudi</a>
+
+            <!-- SMART BUTTON -->
+            {% if 'http' in book.file_path %}
+                <a href="{{ book.file_path }}" target="_blank" class="btn" style="background-color: var(--success); color: white; padding: 12px 40px;">
+                    <i class="fas fa-book-reader"></i> Soma PDF
+                </a>
+            {% else %}
+                <a href="{{ url_for('download_book', filename=book.file_path) }}" target="_blank" class="btn" style="background-color: var(--success); color: white; padding: 12px 40px;">
+                    <i class="fas fa-book-reader"></i> Soma PDF
+                </a>
+            {% endif %}
+            
+        </div>
     </div>
 
 </div>
