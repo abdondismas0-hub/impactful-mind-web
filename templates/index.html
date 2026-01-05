@@ -1,183 +1,101 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-    <!-- 1. SLIDESHOW (Carousel) -->
-    <!-- Sehemu hii inaonyesha picha zinazotembea juu ya ukurasa -->
-    <div class="carousel-container" style="margin-bottom: 40px; position: relative; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); min-height: 450px;">
+    <!-- 1. SLIDESHOW -->
+    <div class="carousel-container" style="margin-bottom: 50px;">
         {% if carousel_posts %}
-            <div id="slideshow-wrapper">
-                {% for post in carousel_posts %}
-                <div class="carousel-item fade" style="display: {{ 'block' if loop.first else 'none' }}; height: 450px; width: 100%; position: relative; background: #000;">
-                    
-                    <!-- Background Blur (Hujaza nafasi tupu pembeni) -->
-                    <!-- Tunatumia logic: Kama ni link ya mtandaoni (http), itumie. Kama hapana, tumia route ya download -->
-                    {% set img_src = post.image_file if 'http' in post.image_file else url_for('download_book', filename=post.image_file) %}
-                    
-                    <div class="slide-bg" style="background-image: url('{{ img_src }}'); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(20px) brightness(0.4);"></div>
-                    
-                    <!-- Picha Halisi (Inaonekana yote bila kukatika) -->
-                    <img src="{{ img_src }}" class="slide-img-front" alt="{{ post.title }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2;">
-
-                    <!-- Maandishi ya chini -->
-                    <div class="carousel-caption" style="position: absolute; bottom: 0; width: 100%; padding: 30px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); color: white; z-index: 3;">
-                        <h2 style="color: #f1c40f; font-size: 2rem; margin-bottom: 10px; text-shadow: 2px 2px 4px #000;">{{ post.title }}</h2>
-                        <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn" style="padding: 8px 25px; background-color: #3498db; border: none; color: white; text-decoration: none; border-radius: 5px;">Soma Zaidi</a>
-                    </div>
+            {% for post in carousel_posts %}
+            <div class="carousel-item fade" style="display: {{ 'block' if loop.first else 'none' }};">
+                {% if post.image_file %}
+                <div class="slide-bg" style="background-image: url('{{ post.image_file }}');"></div>
+                <img src="{{ post.image_file }}" class="slide-img-front" alt="{{ post.title }}">
+                {% else %}
+                <div class="slide-bg" style="background: #222;"></div>
+                {% endif %}
+                <div class="carousel-caption">
+                    <h2 style="color: var(--accent);">{{ post.title }}</h2>
+                    <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn">Soma Zaidi</a>
                 </div>
-                {% endfor %}
             </div>
+            {% endfor %}
         {% else %}
-            <!-- Ujumbe wa Kukaribisha (Kama hamna slides) -->
-            <div class="glass-panel" style="text-align: center; padding: 100px 20px; background: linear-gradient(135deg, #1e3c72, #2a5298); height: 450px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                <h1 style="color: #f1c40f; font-size: 3rem; margin-bottom: 20px;">Karibu Impactful Mind</h1>
-                <p style="font-size: 1.5rem; color: white;">Maktaba ya Dijitali.</p>
-                <a href="{{ url_for('library') }}" class="btn" style="padding: 12px 30px; font-size: 1.1rem; background-color: #f1c40f; color: #0c1422; text-decoration: none; border-radius: 25px; font-weight: bold; margin-top: 20px;">Ingia Maktaba &rarr;</a>
+            <div style="height: 100%; display: flex; align-items: center; justify-content: center; background: #1a1a1a;">
+                <h1 style="color: var(--accent);">Karibu Impactful Mind</h1>
             </div>
         {% endif %}
     </div>
 
-    <!-- 2. FOUNDER SECTION (SQUARE DESIGN) -->
-    <section class="founder-card" style="display: flex; flex-wrap: wrap; background: rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; margin-bottom: 50px;">
-        <!-- Picha ya Founder -->
-        <div class="founder-img-box" style="flex: 1 1 350px; min-height: 400px; background: #000; position: relative;">
+    <!-- 2. FOUNDER -->
+    <section class="founder-card">
+        <div class="founder-img-box">
             {% if about_info and about_info.founder_image %}
-                {% set founder_src = about_info.founder_image if 'http' in about_info.founder_image else url_for('download_book', filename=about_info.founder_image) %}
-                <img src="{{ founder_src }}" style="width: 100%; height: 100%; object-fit: cover; display: block;" alt="Founder">
+                <img src="{{ about_info.founder_image }}" class="founder-img" alt="Founder">
             {% else %}
-                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-user fa-5x" style="color: #555;"></i>
-                </div>
+                <div style="width: 100%; height: 100%; background: #333;"></div>
             {% endif %}
         </div>
-        
-        <!-- Maelezo ya Founder -->
-        <div class="founder-info" style="flex: 1 1 400px; padding: 40px; display: flex; flex-direction: column; justify-content: center;">
-            <span style="color: #aaa; letter-spacing: 2px; font-weight: bold; font-size: 0.9rem; margin-bottom: 10px; display: block;">MWANZILISHI & KIONGOZI</span>
-            <h2 style="color: #f1c40f; font-size: 2.5rem; margin-top: 0; margin-bottom: 20px; text-transform: uppercase;">
-                {{ about_info.founder_name if about_info else 'Jina la Founder' }}
-            </h2>
-            <div style="color: #ddd; line-height: 1.8; font-size: 1.1rem; margin-bottom: 30px; white-space: pre-wrap;">
-                {{ about_info.founder_bio if about_info else 'Maelezo kuhusu mwanzilishi yataonekana hapa.' }}
-            </div>
-            <a href="{{ url_for('contact') }}" class="btn" style="background-color: #2ecc71; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center;">
-                <i class="fas fa-envelope"></i> Wasiliana Naye
-            </a>
+        <div class="founder-info">
+            <span class="founder-title">MWANZILISHI</span>
+            <h2>{{ about_info.founder_name if about_info else 'Founder' }}</h2>
+            <div class="founder-bio">{{ about_info.founder_bio if about_info else '...' }}</div>
+            <a href="{{ url_for('contact') }}" class="btn">Wasiliana Naye</a>
         </div>
     </section>
 
-    <!-- 3. VIDEO SECTION (MPYA) -->
+    <!-- 3. VIDEO -->
     {% if videos %}
-    <section class="glass-panel" style="margin-bottom: 40px; padding: 30px; border-radius: 15px; background: rgba(255,255,255,0.05);">
-        <h3 style="color: #f1c40f; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 20px;">
-            <i class="fas fa-video"></i> Video Mpya
-        </h3>
+    <section class="glass-panel" style="margin-bottom: 50px;">
+        <h3 style="color: var(--accent); margin-bottom: 20px;">Video Mpya</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
             {% for video in videos %}
             <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px;">
-                {% set video_src = video.video_file if 'http' in video.video_file else url_for('download_book', filename=video.video_file) %}
-                <video width="100%" controls style="border-radius: 10px; margin-bottom: 10px;">
-                    <source src="{{ video_src }}" type="video/mp4">
-                    Browser yako haikubali video hii.
+                <video width="100%" controls>
+                    <source src="{{ video.video_file }}" type="video/mp4">
                 </video>
-                <h4 style="color: white; margin: 5px 0;">{{ video.title }}</h4>
-                <p style="color: #ccc; font-size: 0.9rem;">{{ video.description }}</p>
+                <h4 style="color: white; margin-top: 10px;">{{ video.title }}</h4>
             </div>
             {% endfor %}
         </div>
     </section>
     {% endif %}
 
-    <!-- 4. LATEST CONTENT GRID (Posts & Books) -->
+    <!-- 4. LATEST POSTS & BOOKS -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-        
-        <!-- Latest Posts -->
-        <div class="glass-panel" style="padding: 20px; border-radius: 15px; background: rgba(255,255,255,0.05);">
-            <h3 style="color: #f1c40f; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 20px;">
-                <i class="fas fa-newspaper"></i> Machapisho Mapya
-            </h3>
-            <ul style="list-style: none; padding: 0;">
-                {% for post in posts %}
-                <li style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 15px;">
-                    <!-- Thumbnail -->
-                    <div style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 5px; overflow: hidden; background: #000;">
-                        {% if post.image_file %}
-                            {% set thumb_src = post.image_file if 'http' in post.image_file else url_for('download_book', filename=post.image_file) %}
-                            <img src="{{ thumb_src }}" style="width: 100%; height: 100%; object-fit: cover;">
-                        {% endif %}
-                    </div>
-                    <div>
-                        <a href="{{ url_for('view_post', post_id=post.id) }}" style="color: white; font-weight: bold; text-decoration: none; font-size: 1rem; display: block;">{{ post.title }}</a>
-                        <small style="color: #aaa;">{{ post.date_posted.strftime('%d %b %Y') }}</small>
-                    </div>
-                </li>
-                {% else %}
-                    <li style="color: #888;">Hakuna posts bado.</li>
-                {% endfor %}
-            </ul>
-            <div style="text-align: right; margin-top: 15px;">
-                <a href="{{ url_for('posts') }}" style="color: #3498db; text-decoration: none;">Ona Zote &rarr;</a>
+        <!-- Posts -->
+        <div class="glass-panel">
+            <h3 style="color: var(--accent);">Machapisho</h3>
+            {% for post in posts %}
+            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <a href="{{ url_for('view_post', post_id=post.id) }}" style="color: white; font-weight: bold;">{{ post.title }}</a>
             </div>
+            {% endfor %}
         </div>
-
-        <!-- Latest Books -->
-        <div class="glass-panel" style="padding: 20px; border-radius: 15px; background: rgba(255,255,255,0.05);">
-            <h3 style="color: #f1c40f; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 20px;">
-                <i class="fas fa-book"></i> Vitabu Vipya
-            </h3>
-            <ul style="list-style: none; padding: 0;">
-                {% for book in books %}
-                <li style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span style="font-weight: bold; color: #fff; display: block;">{{ book.title }}</span>
-                        <small style="color: #aaa;">{{ book.author }}</small>
-                    </div>
-                    
-                    <!-- KITUFE CHA KUPAKUA (DOWNLOAD DIRECTLY) -->
-                    {% if 'http' in book.file_path %}
-                        <a href="{{ book.file_path }}" target="_blank" download style="color: #2ecc71; text-decoration: none; background: rgba(46,204,113,0.1); padding: 5px 10px; border-radius: 5px; font-weight: bold;">
-                            <i class="fas fa-download"></i> PDF
-                        </a>
-                    {% else %}
-                        <a href="{{ url_for('download_book', filename=book.file_path) }}" target="_blank" download style="color: #2ecc71; text-decoration: none; background: rgba(46,204,113,0.1); padding: 5px 10px; border-radius: 5px; font-weight: bold;">
-                            <i class="fas fa-download"></i> PDF
-                        </a>
-                    {% endif %}
-                </li>
-                {% else %}
-                    <li style="color: #888;">Hakuna vitabu bado.</li>
-                {% endfor %}
-            </ul>
-            <div style="text-align: right; margin-top: 15px;">
-                <a href="{{ url_for('library') }}" style="color: #3498db; text-decoration: none;">Ingia Maktaba &rarr;</a>
+        <!-- Books -->
+        <div class="glass-panel">
+            <h3 style="color: var(--accent);">Vitabu</h3>
+            {% for book in books %}
+            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between;">
+                <span style="color: white;">{{ book.title }}</span>
+                <a href="{{ url_for('read_book', book_id=book.id) }}" style="color: var(--success);">Soma</a>
             </div>
+            {% endfor %}
         </div>
-
     </div>
 
-    <!-- Script ya Slideshow (Auto Play) -->
     <script>
         let slideIndex = 0;
         const items = document.querySelectorAll('.carousel-item');
-        
         function cycleSlides() {
             if(items.length > 0) {
                 for(let i=0; i<items.length; i++) items[i].style.display = "none";
                 slideIndex++;
                 if(slideIndex > items.length) slideIndex = 1;
-                
-                // Muhimu: Tumia 'flex' kwa sababu CSS yetu inatumia flex ku-center picha
                 items[slideIndex-1].style.display = "flex"; 
-                
-                setTimeout(cycleSlides, 5000); // Badilisha kila sekunde 5
+                setTimeout(cycleSlides, 5000);
             }
         }
-        
-        // Anza slideshow ukurasa ukipakia
-        document.addEventListener('DOMContentLoaded', cycleSlides);
+        cycleSlides();
     </script>
-
 {% endblock %}
 
 
-                        
