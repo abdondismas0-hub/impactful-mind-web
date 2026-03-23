@@ -8,27 +8,21 @@ from passlib.hash import sha256_crypt
 from sqlalchemy import or_
 import cloudinary
 import cloudinary.uploader
-import cloudinary.api
 
-# --- MWANZO WA CONFIGURATION ---
 app = Flask(__name__)
 
-# 1. DATABASE LOGIC (PostgreSQL kwa Render, SQLite kwa Local)
+# --- DATABASE CONFIG ---
 database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_DIR, "impactful_mind.db")}'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_DIR, "database.db")}'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'impactful_mind_professional_2025')
+app.config['SECRET_KEY'] = 'impactful_mind_secret_2025'
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
-
-# Hakikisha folder la uploads lipo kwa ajili ya local testing
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -38,32 +32,11 @@ login_manager.login_view = 'admin_login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- MIFUMO YA USALAMA NA FILE UPLOADS ---
-def save_file(file_storage):
-    """
-    Inapakia faili Cloudinary (Online) au Static folder (Local).
-    """
-    if not file_storage or file_storage.filename == '':
-        return None
-        
-    if os.environ.get('CLOUDINARY_URL'):
-        try:
-            upload_result = cloudinary.uploader.upload(file_storage, resource_type="auto")
-            return upload_result['secure_url'] 
-        except Exception as e:
-            print(f">>> Kosa la Cloudinary: {e}", file=sys.stderr)
-            return None
-    else:
-        filename = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + file_storage.filename
-        file_storage.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return filename
-
-# --- MODELS (DATA STRUCTURE) ---
+# --- MODELS ---
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False) 
-    is_admin = db.Column(db.Boolean, default=True)
+    password = db.Column(db.String(255), nullable=False)
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -77,74 +50,65 @@ class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     author = db.Column(db.String(100))
-    description = db.Column(db.Text)
     file_path = db.Column(db.String(500))
     date_uploaded = db.Column(db.DateTime, default=datetime.utcnow)
 
 class About(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    founder_name = db.Column(db.String(100), default="Mwanzilishi")
+    founder_name = db.Column(db.String(100), default="Founder")
     founder_bio = db.Column(db.Text)
     founder_image = db.Column(db.String(500))
 
-# --- CONTEXT PROCESSOR (Kuepusha Errors kwenye Templates) ---
-@app.context_processor
-def inject_global_data():
-    try:
-        about = About.query.first()
-        return dict(about_info=about)
-    except:
-        return dict(about_info=None)
+# --- ROUTES (HIZI NDIZO ZINAZOTATUA ERROR ZAKO) ---
 
-# --- ROUTES ---
 @app.route("/")
 def home():
     try:
-        carousel = Post.query.filter_by(is_carousel=True).order_by(Post.date_posted.desc()).all()
-        posts = Post.query.filter_by(is_carousel=False).order_by(Post.date_posted.desc()).limit(3).all()
-        books = Book.query.order_by(Book.date_uploaded.desc()).limit(3).all()
+        carousel = Post.query.filter_by(is_carousel=True).all()
+        posts = Post.query.filter_by(is_carousel=False).limit(6).all()
+        books = Book.query.limit(3).all()
         return render_template('index.html', carousel_posts=carousel, posts=posts, books=books)
-    except Exception as e:
-        print(f">>> Home Route Error: {e}", file=sys.stderr)
+    except:
         return render_template('index.html', carousel_posts=[], posts=[], books=[])
+
+# 1. SEARCH ROUTE (Iliyokuwa inakosekana kwenye Jan 5 logs)
+@app.route("/search")
+def search():
+    query = request.args.get('q', '')
+    posts = Post.query.filter(Post.title.ilike(f'%{query}%')).all()
+    books = Book.query.filter(Book.title.ilike(f'%{query}%')).all()
+    return render_template('search_results.html', posts=posts, books=books, query=query)
+
+# 2. CONTACT ROUTE (Iliyokuwa inakosekana kwenye Mar 23 logs)
+@app.route("/contact")
+def contact():
+    return render_template('contact.html', title='Wasiliana Nasi')
+
+@app.route("/post/<int:post_id>")
+def view_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template('view_post.html', post=post)
 
 @app.route("/admin_login", methods=['GET', 'POST'])
 def admin_login():
-    if current_user.is_authenticated:
-        return redirect(url_for('admin_dashboard'))
     if request.method == 'POST':
         user = User.query.filter_by(username=request.form.get('username')).first()
         if user and sha256_crypt.verify(request.form.get('password'), user.password):
             login_user(user)
             return redirect(url_for('admin_dashboard'))
-        flash('Ingizo si sahihi!', 'danger')
     return render_template('login.html')
 
 @app.route("/admin")
 @login_required
 def admin_dashboard():
-    posts = Post.query.all()
-    books = Book.query.all()
-    return render_template('dashboard.html', posts=posts, books=books)
+    return render_template('dashboard.html')
 
-@app.route("/logout")
-def logout():
-    logout_user()
-    return redirect(url_for('home'))
-
-# --- DB INITIALIZER ---
+# --- DB INIT ---
 with app.app_context():
-    try:
-        db.create_all()
-        if not User.query.filter_by(username='admin').first():
-            hashed_pw = sha256_crypt.hash("admin123")
-            admin_user = User(username='admin', password=hashed_pw)
-            db.session.add(admin_user)
-        if not About.query.first():
-            db.session.add(About(founder_name="Impactful Mind", founder_bio="Karibu."))
+    db.create_all()
+    if not User.query.filter_by(username='admin').first():
+        db.session.add(User(username='admin', password=sha256_crypt.hash("admin123")))
         db.session.commit()
-    except Exception as e:
-        print(f">>> DB Init Error: {e}", file=sys.stderr)
 
 if __name__ == '__main__':
     app.run(debug=True)
