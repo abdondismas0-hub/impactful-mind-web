@@ -28,7 +28,7 @@ db = SQLAlchemy(app)
 
 # Authentication Setup
 login_manager = LoginManager(app)
-login_manager.login_view = 'auth_login' # Ikiitwa bila login, inakuleta hapa
+login_manager.login_view = 'login' # Ikiitwa bila login, inakuleta hapa
 login_manager.login_message_category = "info"
 
 @login_manager.user_loader
@@ -110,7 +110,7 @@ def contact():
 # 4. AUTHENTICATION (Ulinzi na Login)
 # ==========================================
 @app.route("/login", methods=['GET', 'POST'])
-def auth_login():
+def login():
     if current_user.is_authenticated:
         return redirect(url_for('admin_dashboard'))
         
