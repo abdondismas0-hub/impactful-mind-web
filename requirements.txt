@@ -1,9 +1,9 @@
 Flask
-gunicorn
-psycopg2-binary
 Flask-SQLAlchemy
 Flask-Login
-cloudinary
-email-validator
-Werkzeug
 passlib
+email-validator
+gunicorn
+psycopg2-binary
+cloudinary
+Werkzeug==2.2.3
