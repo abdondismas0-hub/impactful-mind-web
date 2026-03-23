@@ -1,101 +1,78 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <!-- 1. SLIDESHOW -->
-    <div class="carousel-container" style="margin-bottom: 50px;">
-        {% if carousel_posts %}
-            {% for post in carousel_posts %}
-            <div class="carousel-item fade" style="display: {{ 'block' if loop.first else 'none' }};">
-                {% if post.image_file %}
-                <div class="slide-bg" style="background-image: url('{{ post.image_file }}');"></div>
-                <img src="{{ post.image_file }}" class="slide-img-front" alt="{{ post.title }}">
-                {% else %}
-                <div class="slide-bg" style="background: #222;"></div>
-                {% endif %}
-                <div class="carousel-caption">
-                    <h2 style="color: var(--accent);">{{ post.title }}</h2>
-                    <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn">Soma Zaidi</a>
+<!-- 1. HERO SECTION YENYE SLIDESHOW (CAROUSEL) YA KIBABE -->
+{% if carousel_posts %}
+<div id="heroCarousel" class="carousel slide mb-5 rounded overflow-hidden shadow-lg" data-bs-ride="carousel">
+    <div class="carousel-inner">
+        {% for post in carousel_posts %}
+        <div class="carousel-item {% if loop.first %}active{% endif %}">
+            <!-- Picha (Kama ipo, kama haipo weka background nyeusi) -->
+            <div style="height: 400px; background: url('{{ post.image_url if post.image_url else 'https://via.placeholder.com/1200x400/0f172a/f59e0b?text=Impactful+Mind' }}') center/cover;">
+                <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 p-3 rounded">
+                    <h2 class="text-warning fw-bold">{{ post.title }}</h2>
+                    <p>{{ post.content[:100] }}...</p>
+                    <a href="/post/{{ post.id }}" class="btn btn-warning">Soma Zaidi</a>
                 </div>
             </div>
-            {% endfor %}
-        {% else %}
-            <div style="height: 100%; display: flex; align-items: center; justify-content: center; background: #1a1a1a;">
-                <h1 style="color: var(--accent);">Karibu Impactful Mind</h1>
-            </div>
-        {% endif %}
+        </div>
+        {% endfor %}
     </div>
+    <!-- Vitufe vya kusogeza -->
+    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Iliyopita</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Ijayo</span>
+    </button>
+</div>
+{% else %}
+<div class="text-center py-5 bg-dark rounded mb-5 shadow">
+    <h1 class="text-warning fw-bold">KARIBU IMPACTFUL MIND</h1>
+    <p class="lead">Tunajenga akili zinazoleta mabadiliko chanya kwenye jamii.</p>
+</div>
+{% endif %}
 
-    <!-- 2. FOUNDER -->
-    <section class="founder-card">
-        <div class="founder-img-box">
-            {% if about_info and about_info.founder_image %}
-                <img src="{{ about_info.founder_image }}" class="founder-img" alt="Founder">
-            {% else %}
-                <div style="width: 100%; height: 100%; background: #333;"></div>
-            {% endif %}
-        </div>
-        <div class="founder-info">
-            <span class="founder-title">MWANZILISHI</span>
-            <h2>{{ about_info.founder_name if about_info else 'Founder' }}</h2>
-            <div class="founder-bio">{{ about_info.founder_bio if about_info else '...' }}</div>
-            <a href="{{ url_for('contact') }}" class="btn">Wasiliana Naye</a>
-        </div>
-    </section>
+<!-- 2. FOUNDER SECTION (Professional Look) -->
+{% if about_info %}
+<div class="row align-items-center mb-5 bg-dark p-4 rounded shadow">
+    <div class="col-md-4 text-center">
+        <!-- Picha ya Founder yenye muonekano wa duara -->
+        <img src="{{ about_info.founder_image if about_info.founder_image else 'https://via.placeholder.com/250' }}" 
+             alt="{{ about_info.founder_name }}" 
+             class="img-fluid rounded-circle border border-warning border-4 shadow-lg"
+             style="width: 250px; height: 250px; object-fit: cover;">
+    </div>
+    <div class="col-md-8 mt-4 mt-md-0">
+        <h3 class="text-warning fw-bold border-bottom border-secondary pb-2">Kuhusu Mwanzilishi</h3>
+        <h4 class="text-light">{{ about_info.founder_name }}</h4>
+        <p class="text-muted" style="font-size: 1.1rem; line-height: 1.8;">
+            {{ about_info.founder_bio }}
+        </p>
+    </div>
+</div>
+{% endif %}
 
-    <!-- 3. VIDEO -->
-    {% if videos %}
-    <section class="glass-panel" style="margin-bottom: 50px;">
-        <h3 style="color: var(--accent); margin-bottom: 20px;">Video Mpya</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-            {% for video in videos %}
-            <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px;">
-                <video width="100%" controls>
-                    <source src="{{ video.video_file }}" type="video/mp4">
-                </video>
-                <h4 style="color: white; margin-top: 10px;">{{ video.title }}</h4>
+<!-- 3. RECENT POSTS -->
+<div class="row">
+    <h3 class="mb-4 text-warning"><i class="fas fa-newspaper"></i> Makala za Hivi Karibuni</h3>
+    {% for post in posts %}
+    <div class="col-md-4 mb-4">
+        <div class="card bg-dark text-light h-100 border-secondary shadow">
+            <div class="card-body">
+                <h5 class="card-title text-warning">{{ post.title }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ post.date_posted.strftime('%Y-%m-%d') }}</h6>
+                <p class="card-text">{{ post.content[:100] }}...</p>
+                <a href="/post/{{ post.id }}" class="btn btn-outline-warning btn-sm">Soma Makala</a>
             </div>
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
-
-    <!-- 4. LATEST POSTS & BOOKS -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-        <!-- Posts -->
-        <div class="glass-panel">
-            <h3 style="color: var(--accent);">Machapisho</h3>
-            {% for post in posts %}
-            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <a href="{{ url_for('view_post', post_id=post.id) }}" style="color: white; font-weight: bold;">{{ post.title }}</a>
-            </div>
-            {% endfor %}
-        </div>
-        <!-- Books -->
-        <div class="glass-panel">
-            <h3 style="color: var(--accent);">Vitabu</h3>
-            {% for book in books %}
-            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between;">
-                <span style="color: white;">{{ book.title }}</span>
-                <a href="{{ url_for('read_book', book_id=book.id) }}" style="color: var(--success);">Soma</a>
-            </div>
-            {% endfor %}
         </div>
     </div>
-
-    <script>
-        let slideIndex = 0;
-        const items = document.querySelectorAll('.carousel-item');
-        function cycleSlides() {
-            if(items.length > 0) {
-                for(let i=0; i<items.length; i++) items[i].style.display = "none";
-                slideIndex++;
-                if(slideIndex > items.length) slideIndex = 1;
-                items[slideIndex-1].style.display = "flex"; 
-                setTimeout(cycleSlides, 5000);
-            }
-        }
-        cycleSlides();
-    </script>
+    {% else %}
+    <p>Hakuna makala zilizowekwa bado.</p>
+    {% endfor %}
+</div>
 {% endblock %}
 
 
