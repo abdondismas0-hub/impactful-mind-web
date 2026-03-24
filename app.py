@@ -140,15 +140,11 @@ def admin_dashboard():
     if current_user.role != 'admin':
         flash("Huna ruhusa ya kuingia hapa.", "danger")
         return redirect(url_for('home')
-        
+                          
     posts = Post.query.all()
     books = Book.query.all()
     users = User.query.all()
     return render_template('dashboard.html', posts=posts, books=books, users=users)
-    
-@app.route("/post<int.post_id>")
-def view _post (post_id):
-    return f"hapa ni ukurasa wa makala namba{post_id}"
 
 # ==========================================
 # 6. SYSTEM INITIALIZATION (Kuwasha Database)
