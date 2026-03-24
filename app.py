@@ -161,10 +161,15 @@ with app.app_context():
         db.session.add(About(founder_name="Mkurugenzi", founder_bio="Karibu Impactful Mind."))
         db.session.commit()
 
-@app.route("/add_book")
+@app'route("\add_book")
 @login_required
 def add_book():
-    return "sehemu ya vitabu inakuja ivi karibumi"
+    return "ukurasa wa kuongeza vitabu umekuja hivi karibuni"
+
+@app.route("\add_book")
+@login_required
+def add_post():
+    return "ukurasa wa kuongeza makala unakuja hivi karibuni"
     
 if __name__ == '__main__':
     app.run(debug=True)
