@@ -139,7 +139,7 @@ def admin_dashboard():
     # Zuia watu wasio admins kuingia hapa
     if current_user.role != 'admin':
         flash("Huna ruhusa ya kuingia hapa.", "danger")
-        return redirect(url_for('home')
+        return redirect(url_for('home'))
                           
     posts = Post.query.all()
     books = Book.query.all()
