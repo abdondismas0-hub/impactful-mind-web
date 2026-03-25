@@ -79,12 +79,16 @@ def admin_dashboard():
 @login_required
 def add_book():
     return "Sehemu ya kuongeza vitabu inajengwa."
-
+    
 @app.route("/add_post")
 @login_required
 def add_post():
     return "Sehemu ya kuongeza makala inajengwa."
 
+@app.route("/search")
+def search():
+    return "Sehemu ya kutafuta (Search) inakuja hivi karibuni."
+    
 # ================= KUWASHA SERVER =================
 if __name__ == "__main__":
     with app.app_context():
