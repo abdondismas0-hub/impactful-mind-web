@@ -6,6 +6,7 @@ import os
 # ================= 1. APP CONFIGURATION =================
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'siri_nzito_sana_hapa' 
+basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
