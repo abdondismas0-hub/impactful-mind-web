@@ -35,6 +35,9 @@ class Book(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+with app.app_context():
+    db.create_all()
+
 # ================= 3. PUBLIC ROUTES (Kuzuia BuildErrors) =================
 # Hapa tumeweka endpoints zote ambazo HTML inazitafuta ili zisivunje app
 
