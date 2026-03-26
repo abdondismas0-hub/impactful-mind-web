@@ -3,13 +3,18 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import os
 
+uri = os.environ.get ('DATABASE_URL', ' sqlite: ///database.db ')
+if uri.startswith('postgres.//','postgresql://', 1)
+app.config['SQALCHEMY_DATABASE_URI'] = uri
 # ================= 1. APP CONFIGURATION =================
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'siri_nzito_sana_hapa' 
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+#app.config['SECRET_KEY'] = 'siri_nzito_sana_hapa' 
+#basedir = os.path.abspath(os.path.dirname(__file__))
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+#app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URI' , 'sqlite :///database.db']
+app.config['SQALCHEMY_TRACK_MODIFICATION'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login' # Inaelekeza watumiaji wasio na login kwenda /login
