@@ -64,6 +64,10 @@ def library():
 def contact():
     return render_template("contact.html")
 
+@app.route("/search")
+def search():
+    return "mfumo wa kutafuta (search) unakuja hivi karibuni
+
 # ================= 5. AUTHENTICATION & SETUP =================
 @app.route("/setup_admin")
 def setup_admin():
