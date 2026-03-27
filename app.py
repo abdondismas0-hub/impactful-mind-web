@@ -66,7 +66,7 @@ def contact():
 
 @app.route("/search")
 def search():
-    return "mfumo wa kutafuta (search) unakuja hivi karibuni
+    return "mfumo wa kutafuta (search) unakuja hivi karibuni"
 
 # ================= 5. AUTHENTICATION & SETUP =================
 @app.route("/setup_admin")
