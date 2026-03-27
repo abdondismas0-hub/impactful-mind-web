@@ -10,10 +10,10 @@ app.config["SQLALCHEMY_DATABASE_URI"] = uri
 # ================= 1. APP CONFIGURATION =================
 app = Flask(__name__)
 
-#app.config['SECRET_KEY'] = 'siri_nzito_sana_hapa' 
-#basedir = os.path.abspath(os.path.dirname(__file__))
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-#app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'siri_nzito_sana_hapa' 
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["SQALCHEMY_DATABASE_URI"] = os.environ.get['DATABASE_URI' , 'sqlite :///database.db']
 app.config['SQALCHEMY_TRACK_MODIFICATION'] = False
 db = SQLAlchemy(app)
