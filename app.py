@@ -4,7 +4,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 import os
 
 uri = os.environ.get ('DATABASE_URL', ' sqlite: ///database.db ')
-if uri.startswith('postgres.//','postgresql://', 1)
+if uri.startswith('postgres.//','postgresql://', 1):
 app.config['SQALCHEMY_DATABASE_URI'] = uri
 # ================= 1. APP CONFIGURATION =================
 app = Flask(__name__)
