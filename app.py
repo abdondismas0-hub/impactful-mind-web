@@ -112,19 +112,12 @@ def logout():
     return redirect(url_for('home'))
 
 # ================= 6. ADMIN DASHBOARD =================
-@app.route("/admin")
-@login_required
-def admin_dashboard():
-    posts = post.query.all()
-    books = book.query.all()
-    return render_template('dashboard.html', posts=posts, books=books)
-
 #NJIA MPYA
 @app.route("/admin")
 @login_required
 def admin_dashboard():
     # Tunachukua vitabu na makala zote kutoka kwenye database ili kuzionyesha kwenye dashboard
-    posts = Post.query.all()
+    posts = post.query.all()
     books = Book.query.all()
     return render_template('dashboard.html', posts=posts, books=books)
 
