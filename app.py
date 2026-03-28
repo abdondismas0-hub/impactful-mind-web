@@ -119,6 +119,43 @@ def admin_dashboard():
     books = book.query.all()
     return render_template('dashboard.html', posts=posts, books=books)
 
+#NJIA MPYA
+@app.route("/admin")
+@login_required
+def admin_dashboard():
+    # Tunachukua vitabu na makala zote kutoka kwenye database ili kuzionyesha kwenye dashboard
+    posts = Post.query.all()
+    books = Book.query.all()
+    return render_template('dashboard.html', posts=posts, books=books)
+
+# --- ONGEZA HIZI NJIA MPYA MBILI HAPA ---
+@app.route("/add_book", methods=['GET', 'POST'])
+@login_required
+def add_book():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        if title:
+            new_book = Book(title=title)
+            db.session.add(new_book)
+            db.session.commit()
+            flash('Kitabu kimeongezwa kikamilifu!', 'success')
+            return redirect(url_for('admin_dashboard'))
+    return render_template('add_book.html') # Hakikisha una hili faili la HTML baadaye
+
+@app.route("/add_post", methods=['GET', 'POST'])
+@login_required
+def add_post():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        if title and content:
+            new_post = Post(title=title, content=content)
+            db.session.add(new_post)
+            db.session.commit()
+            flash('Makala imeongezwa kikamilifu!', 'success')
+            return redirect(url_for('admin_dashboard'))
+    return render_template('add_post.html')
+
 # ================= 7. SERVER RUN =================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
