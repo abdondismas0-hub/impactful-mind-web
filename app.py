@@ -115,7 +115,9 @@ def logout():
 @app.route("/admin")
 @login_required
 def admin_dashboard():
-    return render_template('dashboard.html')
+    posts = post.query.all()
+    books = book.query.all()
+    return render_template('dashboard.html', posts=posts, books=books)
 
 # ================= 7. SERVER RUN =================
 if __name__ == "__main__":
