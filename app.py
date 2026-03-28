@@ -117,7 +117,7 @@ def logout():
 @login_required
 def admin_dashboard():
     # Tunachukua vitabu na makala zote kutoka kwenye database ili kuzionyesha kwenye dashboard
-    posts = post.query.all()
+    posts = Post.query.all()
     books = Book.query.all()
     return render_template('dashboard.html', posts=posts, books=books)
 
