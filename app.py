@@ -112,28 +112,33 @@ def logout():
     return redirect(url_for('home'))
 
 # ================= 6. ADMIN DASHBOARD =================
-#NJIA MPYA
 @app.route("/admin")
 @login_required
 def admin_dashboard():
-    # Tunachukua vitabu na makala zote kutoka kwenye database ili kuzionyesha kwenye dashboard
-    posts = Post.query.all()
-    books = Book.query.all()
-    return render_template('dashboard.html', posts=posts, books=books)
+    try:
+        # 1. Tunavuta data zote kutoka kwenye database
+        all_posts = Post.query.all()
+        all_books = Book.query.all()
+        
+        # 2. Tunazituma kwenye template kwa majina 'posts' na 'books'
+        # Hapa ndipo siri ya mafanikio ilipo!
+        return render_template('dashboard.html', posts=all_posts, books=all_books)
+    except Exception as e:
+        return f"Kuna tatizo la Database: {str(e)}"
 
-# --- ONGEZA HIZI NJIA MPYA MBILI HAPA ---
 @app.route("/add_book", methods=['GET', 'POST'])
 @login_required
 def add_book():
     if request.method == 'POST':
         title = request.form.get('title')
+        author = request.form.get('author') # Kama unayo field ya author
         if title:
-            new_book = Book(title=title)
+            new_book = Book(title=title, author=author)
             db.session.add(new_book)
             db.session.commit()
-            flash('Kitabu kimeongezwa kikamilifu!', 'success')
+            flash('Kitabu kimeongezwa!', 'success')
             return redirect(url_for('admin_dashboard'))
-    return render_template('add_book.html') # Hakikisha una hili faili la HTML baadaye
+    return render_template('add_book.html')
 
 @app.route("/add_post", methods=['GET', 'POST'])
 @login_required
@@ -145,7 +150,7 @@ def add_post():
             new_post = Post(title=title, content=content)
             db.session.add(new_post)
             db.session.commit()
-            flash('Makala imeongezwa kikamilifu!', 'success')
+            flash('Makala imechapishwa!', 'success')
             return redirect(url_for('admin_dashboard'))
     return render_template('add_post.html')
 
