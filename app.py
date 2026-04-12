@@ -154,6 +154,15 @@ def add_post():
             return redirect(url_for('admin_dashboard'))
     return render_template('add_post.html')
 
+@app.route("/tengeneza_database")
+def tengeneza_database():
+    try:
+        with aap.app_context():
+            db.create_all()
+        return "hongera table zote za database zimetengenezwa kikamilifu, sasa nenda /login"
+    except Exception as e:
+        return f"imeshindikana kutengeneza database, kosa {str(e)}"
+
 # ================= 7. SERVER RUN =================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
