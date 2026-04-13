@@ -1,48 +1,22 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="glass-panel" style="max-width: 800px; margin: 50px auto;">
-    <h2 style="text-align: center; color: var(--accent);">Andika Post Mpya</h2>
-    
-    <form method="POST" enctype="multipart/form-data">
-        <label style="display: block; margin: 10px 0; font-weight: bold;">Kichwa cha Habari:</label>
-        <input type="text" name="title" required placeholder="Mfano: Jinsi ya Kufanikiwa...">
-        
-        <label style="display: block; margin: 20px 0 10px 0; font-weight: bold;">Picha ya Post:</label>
-        
-        <!-- ENEO KUBWA LA KU-UPLOAD -->
-        <label class="upload-area">
-            <input type="file" name="image_file" accept="image/*" onchange="previewImage(event)">
-            <i class="fas fa-cloud-upload-alt upload-icon"></i>
-            <span class="upload-label" id="uploadText">Gusa hapa kuchagua picha kubwa</span>
-            <img id="imagePreview" style="max-width: 100%; max-height: 200px; margin-top: 10px; display: none; border-radius: 10px;">
-        </label>
-
-        <div style="margin: 20px 0; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; display: flex; align-items: center;">
-            <input type="checkbox" name="is_carousel" style="width: 20px; height: 20px; margin-bottom: 0; margin-right: 15px;">
-            <span style="color: var(--accent); font-size: 1.1rem;">Onyesha kwenye Slideshow (Carousel)</span>
-        </div>
-        
-        <label style="display: block; margin: 10px 0; font-weight: bold;">Maelezo:</label>
-        <textarea name="content" rows="12" required placeholder="Andika maelezo kwa kirefu hapa..."></textarea>
-        
-        <button type="submit" class="btn" style="width: 100%; margin-top: 20px;">Chapisha Post</button>
-    </form>
+<div class="container" style="margin-top: 50px; max-width: 800px;">
+    <div class="card" style="padding: 20px; border-radius: 10px;">
+        <h2 style="text-align: center; color: #2c3e50;">Andika Makala Mpya</h2>
+        <hr>
+        <form action="{{ url_for('add_post') }}" method="POST">
+            <div class="mb-3">
+                <label class="form-label">Kichwa cha Habari (Title)</label>
+                <input type="text" name="title" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Maudhui ya Makala (Content)</label>
+                <textarea name="content" class="form-control" rows="10" placeholder="Anza kuandika hapa..." required></textarea>
+            </div>
+            <div style="display: grid;">
+                <button type="submit" class="btn btn-success" style="background-color: #2ecc71; border: none; padding: 10px;">Chapisha Makala (Publish)</button>
+            </div>
+        </form>
+    </div>
 </div>
-
-<!-- Script ndogo ya kuonyesha picha uliyochagua kabla ya ku-upload -->
-<script>
-    function previewImage(event) {
-        var reader = new FileReader();
-        reader.onload = function(){
-            var output = document.getElementById('imagePreview');
-            output.src = reader.result;
-            output.style.display = 'block';
-            document.getElementById('uploadText').innerText = "Picha imechaguliwa!";
-        };
-        reader.readAsDataURL(event.target.files[0]);
-    }
-</script>
 {% endblock %}
-
-
