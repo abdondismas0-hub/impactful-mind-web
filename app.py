@@ -136,7 +136,7 @@ def add_book():
         title = request.form.get('title')
         author = request.form.get('author') # Kama unayo field ya author
         if title:
-            new_book = Book(title=title, author=author)
+            new_book = Book(title=title, author=author, pdf=pdf_name, image=img_name)
             db.session.add(new_book)
             db.session.commit()
             flash('Kitabu kimeongezwa!', 'success')
@@ -149,6 +149,13 @@ def add_post():
     if request.method == 'POST':
         title = request.form.get('title')
         content = request.form.get('content')
+        post_image = request.files.get('post_image')
+
+        img_name = None
+        if post_image:
+            img_name = secure_filename(post_image.filename)
+            post_image.save(os.path.join(app.config['UPLOAD_FOLDER'], img_name))
+                    
         if title and content:
             new_post = Post(title=title, content=content)
             db.session.add(new_post)
