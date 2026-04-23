@@ -3,7 +3,10 @@ from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+UPLOAD_FOLDER = 'static/uploads' app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+if not os.path.exists('UPLOAD_FOLDER'):
+    os.makedirs(UPLOAD_FOLDER)
 # ================= 1. APP CONFIGURATION =================
 app = Flask(__name__)
 # Tunatumia os.environ kupata siri, ikikosekana inatumia ya default
