@@ -4,7 +4,7 @@
     <div class="card" style="padding: 20px; border-radius: 10px; shadow: 0 4px 8px rgba(0,0,0,0.1);">
         <h2 style="text-align: center; color: #2c3e50;">Ongeza Kitabu Kipya</h2>
         <hr>
-        <form action="{{ url_for('add_book') }}" method="POST">
+        <form action="{{ url_for('add_book') }}" method="POST" enctype= "multipart/form-data">
             <div class="mb-3">
                 <label class="form-label">Jina la Kitabu</label>
                 <input type="text" name="title" class="form-control" placeholder="Ingiza jina la kitabu" required>
